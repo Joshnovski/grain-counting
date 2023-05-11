@@ -15,6 +15,9 @@ metadata_dict = grainCounting.process_metadata(meta_data)
 phases = {'Other phases': [0, 160], 'Al': [161, 255]} # just Al
 # phases = {'Other phases': [0, 15], 'C': [16, 60], 'Other phases': [61, 160], 'Al': [161, 255]} # just Al and C
 
+# Adding another note
+# This is a note
+
 edge_detection_threshold = 75
 # Count the pixels and calculate the area fraction according to the range
 area_fraction = grainCounting.process_image(directory_name, stitched_image_name, metadata_dict, phases,
