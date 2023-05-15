@@ -42,14 +42,15 @@ def display_images(grayscale_image_cv, outlined_image_cv):
 if __name__ == "__main__":
     image_path = r"C:\Users\RA user\mgathermal.com\mgathermal.com - Research and Development\3000 Characterisation\Collation Tool - Grain Counting\SI poly 1225-001-01.tiff"
     scale_factor = 1
-    chocolate_chip_count, outlined_image_cv, grayscale_image_cv = count_chocolate_chips(image_path, scale_factor)
+    scale_bar_pixels_per_mm = 255.9812
+    chocolate_chip_count, outlined_image_cv, grayscale_image_cv, real_average_area = count_chocolate_chips(image_path, scale_factor, scale_bar_pixels_per_mm)
 
     if grayscale_image_cv is not None and outlined_image_cv is not None:
         print(f"The number of Al grains visible: {chocolate_chip_count}")
+        print(f"The average surface area of visible Al grains: {real_average_area:.4f} mm^2")
         display_images(grayscale_image_cv, outlined_image_cv)
+
     else:
         print("Error: Unable to process images.")
         sys.exit()
-
-
 
