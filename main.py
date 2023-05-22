@@ -7,6 +7,7 @@ from matplotlib.widgets import Cursor
 scale_factor = 1  # image scaling factor on a scale from 0 to 1. If lower than zero, lose resolution
 scale_bar_pixels_per_mm = 255.9812  # number of pixels per mm found from scale bar with imagej
 grayscale_threshold = 190  # Grayscale Threshold
+bottom_crop_ratio = 0.05  # 5% cropped off the bottom of the image
 
 # Grain area thresholds (in pixels)
 smaller_grain_area_min = 9000
@@ -43,7 +44,7 @@ if __name__ == "__main__":
                                                  smaller_grain_area_min,
                                                  smaller_grain_area_max,
                                                  larger_grain_area_min,
-                                                 larger_grain_area_max)
+                                                 larger_grain_area_max, bottom_crop_ratio)
 
     if grayscale_image_cv is not None and outlined_image_cv is not None:
         print(

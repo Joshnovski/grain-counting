@@ -4,7 +4,7 @@ import numpy as np
 
 
 def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_threshold, smaller_grain_area_min,
-                 smaller_grain_area_max, larger_grain_area_min, larger_grain_area_max):
+                 smaller_grain_area_max, larger_grain_area_min, larger_grain_area_max, bottom_crop_ratio):
     # Load the image
     image = cv2.imread(image_path)
 
@@ -14,7 +14,6 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
 
     # Crop the bottom part of the image based on bottom_crop_ratio
     height, width, _ = image.shape
-    bottom_crop_ratio = 0.05
     image = image[:int(height * (1 - bottom_crop_ratio)), :]
 
     # Resize the image if scale_factor is not 1
