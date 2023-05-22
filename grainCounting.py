@@ -4,6 +4,7 @@ import sys
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Cursor
 import config
+from tkinter import filedialog
 
 
 def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_threshold, smaller_grain_area_min,
@@ -90,9 +91,6 @@ def display_images(grayscale_image_cv, outlined_image_cv):
 
 
 def run_grain_counting():
-    image_path = r"C:\Users\RA user\mgathermal.com\mgathermal.com - Research and Development\3000 " \
-                 r"Characterisation\Collation Tool - Grain Counting\SI poly 1225-001-01.tiff"
-
     larger_grain_count, smaller_grain_count, outlined_image_cv, grayscale_image_cv, larger_real_average_area, \
         smaller_real_average_area = count_grains(image_path, config.scale_factor.get(),
                                                  config.scale_bar_pixels_per_mm.get(),
@@ -126,6 +124,15 @@ def run_grain_counting():
     else:
         print("Error: Unable to process images.")
         sys.exit()
+
+
+def select_file():
+    global image_path
+    image_path = filedialog.askopenfilename(initialdir="/", title="Select file", filetypes=(("tiff files", "*.tiff"), ("all files", "*.*")))
+    # Ensure file as been chosen;
+    if not image_path:
+        print("No file selected!")
+        return
 
 
 def reset_values():
