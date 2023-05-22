@@ -1,17 +1,21 @@
-import sys
-
 import cv2
 import sys
 import numpy as np
 
 
-def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_threshold, area_min, area_max):
+def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_threshold, smaller_grain_area_min,
+                 smaller_grain_area_max, larger_grain_area_min, larger_grain_area_max):
     # Load the image
     image = cv2.imread(image_path)
 
     if image is None:
         print(f"Error: Unable to load image from {image_path}")
         sys.exit()
+
+    # Crop the bottom part of the image based on bottom_crop_ratio
+    height, width, _ = image.shape
+    bottom_crop_ratio = 0.05
+    image = image[:int(height * (1 - bottom_crop_ratio)), :]
 
     # Resize the image if scale_factor is not 1
     if scale_factor != 1:
@@ -21,30 +25,44 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Apply a threshold to the grayscale image
-    _, thresholded_image = cv2.threshold(gray_image, grayscale_threshold, 255, cv2.THRESH_BINARY)  # 170, 255
+    _, thresholded_image = cv2.threshold(gray_image, grayscale_threshold, 255, cv2.THRESH_BINARY)
 
     # Find contours in the thresholded image
     contours, _ = cv2.findContours(thresholded_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Filter contours based on size and shape
-    grain_contours = []
-    total_area = 0
+    larger_grain_contours = []
+    smaller_grain_contours = []
+    larger_grain_total_area = 0
+    smaller_grain_total_area = 0
+
     for contour in contours:
-        area = cv2.contourArea(contour)
-        if area_min < area < area_max:  # Widen range here to allow for larger particle sizes
-            grain_contours.append(contour)
-            total_area += area
+        larger_grain_area = cv2.contourArea(contour)
+        smaller_grain_area = cv2.contourArea(contour)
+
+        # higher grain size range
+        if larger_grain_area_min < larger_grain_area < larger_grain_area_max:
+            larger_grain_contours.append(contour)
+            larger_grain_total_area += larger_grain_area
+        # smaller grain size range
+        if smaller_grain_area_min < smaller_grain_area < smaller_grain_area_max:
+            smaller_grain_contours.append(contour)
+            smaller_grain_total_area += smaller_grain_area
 
     # Calculate average area in pixels
-    average_area_pixels = total_area / len(grain_contours) if grain_contours else 0
+    larger_grain_average_area_pixels = larger_grain_total_area / len(larger_grain_contours) if larger_grain_contours else 0
+    smaller_grain_average_area_pixels = smaller_grain_total_area / len(smaller_grain_contours) if smaller_grain_contours else 0
 
     # Convert average area in pixels to average area in square millimeters
     pixel_size_mm = 1 / scale_bar_pixels_per_mm
-    average_area_mm = average_area_pixels * pixel_size_mm ** 2
+    larger_grain_average_area_mm = larger_grain_average_area_pixels * pixel_size_mm ** 2
+    smaller_grain_average_area_mm = smaller_grain_average_area_pixels * pixel_size_mm ** 2
+
 
     # Draw the grain contours on the image
     result_image = image.copy()
-    cv2.drawContours(result_image, grain_contours, -1, (0, 255, 0), 10)  # (Image, contour array, index, (color), thickenss)
+    cv2.drawContours(result_image, larger_grain_contours, -1, (0, 0, 255), 10)  # Red
+    cv2.drawContours(result_image, smaller_grain_contours, -1, (255, 0, 0), 10)  # Blue
 
     # Return the number of chocolate chips, the outlined image, the thresholded image and the average area
-    return len(grain_contours), result_image, thresholded_image, average_area_mm
+    return len(larger_grain_contours), len(smaller_grain_contours), result_image, thresholded_image, larger_grain_average_area_mm, smaller_grain_average_area_mm
