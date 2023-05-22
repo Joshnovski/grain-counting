@@ -1,66 +1,41 @@
-import cv2
-import sys
-from grainCounting import count_grains
-import matplotlib.pyplot as plt
-from matplotlib.widgets import Cursor
+import tkinter as tk
+import config
+import grainCounting
 
-scale_factor = 1  # image scaling factor on a scale from 0 to 1. If lower than zero, lose resolution
-scale_bar_pixels_per_mm = 255.9812  # number of pixels per mm found from scale bar with imagej
-grayscale_threshold = 190  # Grayscale Threshold
-bottom_crop_ratio = 0.05  # 5% cropped off the bottom of the image
+root = tk.Tk()
+root.title("Grain Counting Parameters")
 
-# Grain area thresholds (in pixels)
-smaller_grain_area_min = 9000
-smaller_grain_area_max = 50000
+config.init_variables(root)  # Initialize the tkinter variables
 
-larger_grain_area_min = 50000
-larger_grain_area_max = 600000
+# Add all the entries for the parameters
+tk.Label(root, text="Scale Factor").grid(row=0, column=0)
+tk.Entry(root, textvariable=config.scale_factor).grid(row=0, column=1)
 
+tk.Label(root, text="Scale Bar Pixels per mm").grid(row=1, column=0)
+tk.Entry(root, textvariable=config.scale_bar_pixels_per_mm).grid(row=1, column=1)
 
-def display_images(grayscale_image_cv, outlined_image_cv):
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+tk.Label(root, text="Grayscale Threshold").grid(row=2, column=0)
+tk.Entry(root, textvariable=config.grayscale_threshold).grid(row=2, column=1)
 
-    ax1.imshow(grayscale_image_cv, cmap='gray')
-    ax1.set_title('Grayscale Image')
-    ax1.axis('off')
-    Cursor(ax1, useblit=True, color='red', linewidth=1)
+tk.Label(root, text="Bottom Crop Ratio").grid(row=3, column=0)
+tk.Entry(root, textvariable=config.bottom_crop_ratio).grid(row=3, column=1)
 
-    ax2.imshow(cv2.cvtColor(outlined_image_cv, cv2.COLOR_BGR2RGB))
-    ax2.set_title('Outlined Image')
-    ax2.axis('off')
-    Cursor(ax2, useblit=True, color='red', linewidth=1)
+tk.Label(root, text="Smaller Grain Area Min").grid(row=4, column=0)
+tk.Entry(root, textvariable=config.smaller_grain_area_min).grid(row=4, column=1)
 
-    plt.tight_layout()
-    plt.show()
+tk.Label(root, text="Smaller Grain Area Max").grid(row=5, column=0)
+tk.Entry(root, textvariable=config.smaller_grain_area_max).grid(row=5, column=1)
 
+tk.Label(root, text="Larger Grain Area Min").grid(row=6, column=0)
+tk.Entry(root, textvariable=config.larger_grain_area_min).grid(row=6, column=1)
 
-if __name__ == "__main__":
-    image_path = r"C:\Users\RA user\mgathermal.com\mgathermal.com - Research and Development\3000 " \
-                 r"Characterisation\Collation Tool - Grain Counting\SI poly 1225-001-01.tiff"
-    larger_grain_count, smaller_grain_count, outlined_image_cv, grayscale_image_cv, larger_real_average_area, \
-        smaller_real_average_area = count_grains(image_path, scale_factor,
-                                                 scale_bar_pixels_per_mm,
-                                                 grayscale_threshold,
-                                                 smaller_grain_area_min,
-                                                 smaller_grain_area_max,
-                                                 larger_grain_area_min,
-                                                 larger_grain_area_max, bottom_crop_ratio)
+tk.Label(root, text="Larger Grain Area Max").grid(row=7, column=0)
+tk.Entry(root, textvariable=config.larger_grain_area_max).grid(row=7, column=1)
 
-    if grayscale_image_cv is not None and outlined_image_cv is not None:
-        print(
-            f"The number of smaller {smaller_grain_area_min} to {smaller_grain_area_max} pixel Al grains visible: "
-            f"{smaller_grain_count}")
-        print(
-            f"The number of larger {larger_grain_area_min} to {larger_grain_area_max} pixel Al grains visible: "
-            f"{larger_grain_count}")
-        print(
-            f"The average visible surface area of the smaller {smaller_grain_area_min} to {smaller_grain_area_max} "
-            f"pixel Al grains: {smaller_real_average_area:.4f} mm^2")
-        print(
-            f"The average visible surface area of the larger {larger_grain_area_min} to {larger_grain_area_max} "
-            f"pixel Al grains: {larger_real_average_area:.4f} mm^2")
-        display_images(grayscale_image_cv, outlined_image_cv)
+# Add a button to re-run the grain counting
+tk.Button(root, text="Run Grain Counting", command=grainCounting.run_grain_counting).grid(row=8, column=0, columnspan=2)
 
-    else:
-        print("Error: Unable to process images.")
-        sys.exit()
+# Add a button to reset the parameters to their default values
+tk.Button(root, text="Reset Values", command=grainCounting.reset_values).grid(row=9, column=0, columnspan=2)
+
+root.mainloop()
