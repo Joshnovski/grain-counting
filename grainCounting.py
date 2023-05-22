@@ -1,4 +1,3 @@
-import tkinter as tk
 import cv2
 import sys
 import matplotlib.pyplot as plt
@@ -9,9 +8,11 @@ from tkinter import filedialog
 
 def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_threshold, smaller_grain_area_min,
                  smaller_grain_area_max, larger_grain_area_min, larger_grain_area_max, bottom_crop_ratio):
+
     # Load the image
     image = cv2.imread(image_path)
 
+    # error capture
     if image is None:
         print(f"Error: Unable to load image from {image_path}")
         sys.exit()
@@ -65,8 +66,8 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
 
     # Draw the grain contours on the image
     result_image = image.copy()
-    cv2.drawContours(result_image, larger_grain_contours, -1, (0, 0, 255), 10)  # Red
-    cv2.drawContours(result_image, smaller_grain_contours, -1, (255, 0, 0), 10)  # Blue
+    cv2.drawContours(result_image, larger_grain_contours, -1, (0, 0, 255), 10)  # Red. Thickness 10
+    cv2.drawContours(result_image, smaller_grain_contours, -1, (255, 0, 0), 10)  # Blue. Thickness 10
 
     # Return the number of chocolate chips, the outlined image, the thresholded image and the average area
     return len(larger_grain_contours), len(

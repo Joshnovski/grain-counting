@@ -19,4 +19,4 @@ def init_variables(root):
     smaller_grain_area_min = tk.IntVar(value=9000)
     smaller_grain_area_max = tk.IntVar(value=50000)
     larger_grain_area_min = tk.IntVar(value=50000)
-    larger_grain_area_max = tk.IntVar(value=600000)
+    larger_grain_area_max = tk.IntVar(value=100000)
