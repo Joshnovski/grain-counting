@@ -5,7 +5,9 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Cursor
 import config
 from tkinter import filedialog
-
+from scipy import ndimage as ndi
+from skimage.feature import peak_local_max
+from skimage.segmentation import watershed
 
 def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_threshold, smaller_grain_area_min,
                  smaller_grain_area_max, larger_grain_area_min, larger_grain_area_max, uncertain_grain_area_min, uncertain_grain_area_max, bottom_crop_ratio):
@@ -29,6 +31,12 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     # Convert the image to grayscale
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
+    # Apply a threshold to the grayscale image
+    _, thresholded_image = cv2.threshold(gray_image, grayscale_threshold, 255, cv2.THRESH_BINARY)
+
+    # Find contours in the thresholded image
+    contours, _ = cv2.findContours(thresholded_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
     # Initialise contours and contour areas
     uncertain_grain_contours = []
     larger_grain_contours = []
@@ -37,26 +45,7 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     larger_grain_total_area = 0
     smaller_grain_total_area = 0
 
-    # Increase contast only for specific regions using histogram equalisation
-    for contour in uncertain_grain_contours:
-        # Mask over the uncertain grain regions
-        mask = np.zeros(gray_image.shape, np.unit8)
-        cv2.drawContours(mask, [contour], -1, 255, -1)
-        # Retains the pixels of the grayscale image where the mask is white and sets to zero the pixels where the
-        # mask is black. The regions will be an image of the same size as the grayscale image, but only the current
-        # uncertain region will be visible and all other pixels will be black.
-        uncertain_region = cv2.bitwise_and(gray_image, gray_image, mask=mask)
-        equalized_uncertain_region = cv2.equalizeHist(uncertain_region)  # Enchances the contrast of regions by stretching range of values it contains.
-        gray_image = cv2.bitwise_and(gray_image, gray_image, mask=cv2.bitwise_not(mask))
-        gray_image = cv2.add(gray_image, equalized_uncertain_region)
-
-    # Apply a threshold to the grayscale image
-    _, thresholded_image = cv2.threshold(gray_image, grayscale_threshold, 255, cv2.THRESH_BINARY)
-
-    # Find contours in the thresholded image
-    contours, _ = cv2.findContours(thresholded_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    # Filter contours based on size and shape
+    # Filter contours based on size and shape - first pass
     for contour in contours:
         uncertain_grain_area = cv2.contourArea(contour)
         larger_grain_area = cv2.contourArea(contour)
