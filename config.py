@@ -10,6 +10,8 @@ def init_variables(root):
     global smaller_grain_area_max
     global larger_grain_area_min
     global larger_grain_area_max
+    global uncertain_grain_area_min
+    global uncertain_grain_area_max
 
     scale_factor = tk.DoubleVar(value=1.0)
     scale_bar_pixels_per_mm = tk.DoubleVar(value=255.9812)
@@ -20,3 +22,5 @@ def init_variables(root):
     smaller_grain_area_max = tk.IntVar(value=50000)
     larger_grain_area_min = tk.IntVar(value=50000)
     larger_grain_area_max = tk.IntVar(value=100000)
+    uncertain_grain_area_min = tk.IntVar(value=100000)
+    uncertain_grain_area_max = tk.IntVar(value=400000)
