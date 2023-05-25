@@ -12,7 +12,7 @@ from skimage.segmentation import watershed
 
 def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_threshold, smaller_grain_area_min,
                  smaller_grain_area_max, larger_grain_area_min, larger_grain_area_max, uncertain_grain_area_min,
-                 uncertain_grain_area_max, bottom_crop_ratio):
+                 uncertain_grain_area_max, bottom_crop_ratio, kernel_size, uncertain_grayscale_threshold):
     # Load the image
     image = cv2.imread(image_path)
 
@@ -37,6 +37,16 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
 
     # Find contours in the thresholded image
     contours, _ = cv2.findContours(thresholded_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Find uncertain grain contours to apply blur before contour drawing of the whole image
+    uncertain_grain_contours = [contour for contour in contours
+                                if uncertain_grain_area_min < cv2.contourArea(contour) < uncertain_grain_area_max] #################################
+
+    # Apply blur to uncertain grain areas
+    blurred_image = apply_mask_and_blur(thresholded_image, uncertain_grain_contours, kernel_size, uncertain_grayscale_threshold)
+
+    # Find contours in the new blurred_image
+    contours, _ = cv2.findContours(blurred_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Initialise contours and contour areas
     uncertain_grain_contours = []
@@ -85,10 +95,6 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     cv2.drawContours(result_image, larger_grain_contours, -1, (0, 0, 255), 10)  # Red. Thickness 10
     cv2.drawContours(result_image, smaller_grain_contours, -1, (255, 0, 0), 10)  # Blue. Thickness 10
 
-    # Apply blur to uncertain grain areas
-    kernel_size = 55  # Adjust the is to control the magnitude of the blur
-    blurred_image = apply_mask_and_blur(thresholded_image, uncertain_grain_contours, kernel_size)
-
     # Return the number of chocolate chips, the outlined image, the thresholded image and the average area
     return len(larger_grain_contours), len(
         smaller_grain_contours), len(
@@ -122,7 +128,10 @@ def run_grain_counting():
                                                  config.larger_grain_area_min.get(),
                                                  config.larger_grain_area_max.get(),
                                                  config.uncertain_grain_area_min.get(),
-                                                 config.uncertain_grain_area_max.get(), config.bottom_crop_ratio.get())
+                                                 config.uncertain_grain_area_max.get(),
+                                                 config.bottom_crop_ratio.get(),
+                                                 config.kernel_size.get(),
+                                                 config.uncertain_grayscale_threshold.get())
 
     if grayscale_image_cv is not None and outlined_image_cv is not None:
 
@@ -178,9 +187,11 @@ def reset_values():
     config.larger_grain_area_max.set(100000)
     config.uncertain_grain_area_min.set(100000)
     config.uncertain_grain_area_max.set(400000)
+    config.kernel_size.set(55)
+    config.uncertain_grayscale_threshold.set(200)
 
 
-def apply_mask_and_blur(image, contours, kernel_size):
+def apply_mask_and_blur(image, contours, kernel_size, uncertain_grayscale_threshold):
     # Create an empty mask to start with
     mask = np.zeros(image.shape[:2], dtype=np.uint8)  # Ensuring mask size and shape
 
@@ -193,11 +204,20 @@ def apply_mask_and_blur(image, contours, kernel_size):
     # Apply the blur to the masked image
     blurred_image = cv2.GaussianBlur(masked_image, (kernel_size, kernel_size), 0)
 
+    # Adjust the contrast of the blurred image using thresholding
+    _, adjusted_image = cv2.threshold(blurred_image, uncertain_grayscale_threshold, 255, cv2.THRESH_BINARY)
+
     # Combine the blurred part with the original image
     inv_mask = cv2.bitwise_not(mask)
     image_bg = cv2.bitwise_and(image, image, mask=inv_mask)
-    combined_image = cv2.bitwise_or(image_bg, blurred_image)
+    combined_image = cv2.bitwise_or(image_bg, adjusted_image)
 
     return combined_image
+
+
+
+
+
+
 
 
