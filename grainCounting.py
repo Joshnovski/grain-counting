@@ -9,9 +9,10 @@ from scipy import ndimage as ndi
 from skimage.feature import peak_local_max
 from skimage.segmentation import watershed
 
-def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_threshold, smaller_grain_area_min,
-                 smaller_grain_area_max, larger_grain_area_min, larger_grain_area_max, uncertain_grain_area_min, uncertain_grain_area_max, bottom_crop_ratio):
 
+def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_threshold, smaller_grain_area_min,
+                 smaller_grain_area_max, larger_grain_area_min, larger_grain_area_max, uncertain_grain_area_min,
+                 uncertain_grain_area_max, bottom_crop_ratio):
     # Load the image
     image = cv2.imread(image_path)
 
@@ -84,9 +85,14 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     cv2.drawContours(result_image, larger_grain_contours, -1, (0, 0, 255), 10)  # Red. Thickness 10
     cv2.drawContours(result_image, smaller_grain_contours, -1, (255, 0, 0), 10)  # Blue. Thickness 10
 
+    # Apply blur to uncertain grain areas
+    kernel_size = 55  # Adjust the is to control the magnitude of the blur
+    blurred_image = apply_mask_and_blur(thresholded_image, uncertain_grain_contours, kernel_size)
+
     # Return the number of chocolate chips, the outlined image, the thresholded image and the average area
     return len(larger_grain_contours), len(
-        smaller_grain_contours), len(uncertain_grain_contours), result_image, thresholded_image, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm
+        smaller_grain_contours), len(
+        uncertain_grain_contours), result_image, blurred_image, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm
 
 
 def display_images(grayscale_image_cv, outlined_image_cv):
@@ -107,14 +113,15 @@ def display_images(grayscale_image_cv, outlined_image_cv):
 
 
 def run_grain_counting():
-    larger_grain_count, smaller_grain_count, uncertain_grain_count, outlined_image_cv, grayscale_image_cv, uncertain_real_average_area , larger_real_average_area, \
+    larger_grain_count, smaller_grain_count, uncertain_grain_count, outlined_image_cv, grayscale_image_cv, uncertain_real_average_area, larger_real_average_area, \
         smaller_real_average_area = count_grains(image_path, config.scale_factor.get(),
                                                  config.scale_bar_pixels_per_mm.get(),
                                                  config.grayscale_threshold.get(),
                                                  config.smaller_grain_area_min.get(),
                                                  config.smaller_grain_area_max.get(),
                                                  config.larger_grain_area_min.get(),
-                                                 config.larger_grain_area_max.get(), config.uncertain_grain_area_min.get(),
+                                                 config.larger_grain_area_max.get(),
+                                                 config.uncertain_grain_area_min.get(),
                                                  config.uncertain_grain_area_max.get(), config.bottom_crop_ratio.get())
 
     if grayscale_image_cv is not None and outlined_image_cv is not None:
@@ -152,7 +159,8 @@ def run_grain_counting():
 
 def select_file():
     global image_path
-    image_path = filedialog.askopenfilename(initialdir="/", title="Select file", filetypes=(("tiff files", "*.tiff"), ("all files", "*.*")))
+    image_path = filedialog.askopenfilename(initialdir="/", title="Select file",
+                                            filetypes=(("tiff files", "*.tiff"), ("all files", "*.*")))
     # Ensure file as been chosen;
     if not image_path:
         print("No file selected!")
@@ -170,3 +178,26 @@ def reset_values():
     config.larger_grain_area_max.set(100000)
     config.uncertain_grain_area_min.set(100000)
     config.uncertain_grain_area_max.set(400000)
+
+
+def apply_mask_and_blur(image, contours, kernel_size):
+    # Create an empty mask to start with
+    mask = np.zeros(image.shape[:2], dtype=np.uint8)  # Ensuring mask size and shape
+
+    # Draw filled contours on mask
+    cv2.drawContours(mask, contours, -1, 255, thickness=cv2.FILLED)  # Mask requires single channel
+
+    # Apply the mask to the image
+    masked_image = cv2.bitwise_and(image, image, mask=mask)
+
+    # Apply the blur to the masked image
+    blurred_image = cv2.GaussianBlur(masked_image, (kernel_size, kernel_size), 0)
+
+    # Combine the blurred part with the original image
+    inv_mask = cv2.bitwise_not(mask)
+    image_bg = cv2.bitwise_and(image, image, mask=inv_mask)
+    combined_image = cv2.bitwise_or(image_bg, blurred_image)
+
+    return combined_image
+
+
