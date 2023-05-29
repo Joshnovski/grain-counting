@@ -20,7 +20,7 @@ def init_variables(root):
     grayscale_threshold = tk.IntVar(value=190)
     bottom_crop_ratio = tk.DoubleVar(value=0.05)
 
-    kernel_size = tk.IntVar(value=55)
+    kernel_size = tk.IntVar(value=5)
     uncertain_grayscale_threshold = tk.IntVar(value=200)
 
     smaller_grain_area_min = tk.IntVar(value=9000)
