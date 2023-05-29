@@ -34,13 +34,13 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
 
 
     # Apply a threshold to the grayscale image
-    _, thresholded_image = cv2.threshold(gray_image, grayscale_threshold, 255, cv2.THRESH_BINARY)
+    _, thresholded_image = cv2.threshold(gray_image, 0, 255, cv2.THRESH_OTSU)
+    thresholded_image = cv2.morphologyEx(thresholded_image, cv2.MORPH_OPEN, np.ones((3, 3), dtype=int))
 
     thresholded_image_3chan = cv2.cvtColor(thresholded_image, cv2.COLOR_GRAY2BGR)
 
-    # Now we apply the watershed algorithm to the masked image
     # Distance transformation
-    distance_transform = cv2.distanceTransform(thresholded_image, cv2.DIST_L2, 5) ########################################################################################
+    distance_transform = cv2.distanceTransform(thresholded_image, cv2.DIST_L2, 3) ########################################################################################
     _, sure_foreground = cv2.threshold(distance_transform, distanceTransform_threshold * distance_transform.max(), 255, 0) ##################################################################
     sure_foreground = np.uint8(sure_foreground) #####################################################################################################################
 
