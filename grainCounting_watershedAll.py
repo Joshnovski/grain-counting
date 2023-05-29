@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Cursor
-import config
+import config_watershedAll
 from tkinter import filedialog
 from scipy import ndimage as ndi
 from skimage.feature import peak_local_max
@@ -167,43 +167,43 @@ def display_images(grayscale_image_cv, outlined_image_cv):
 
 def run_grain_counting():
     larger_grain_count, smaller_grain_count, uncertain_grain_count, outlined_image_cv, grayscale_image_cv, uncertain_real_average_area, larger_real_average_area, \
-        smaller_real_average_area = count_grains(image_path, config.scale_factor.get(),
-                                                 config.scale_bar_pixels_per_mm.get(),
-                                                 config.grayscale_threshold.get(),
-                                                 config.smaller_grain_area_min.get(),
-                                                 config.smaller_grain_area_max.get(),
-                                                 config.larger_grain_area_min.get(),
-                                                 config.larger_grain_area_max.get(),
-                                                 config.uncertain_grain_area_min.get(),
-                                                 config.uncertain_grain_area_max.get(),
-                                                 config.bottom_crop_ratio.get(),
-                                                 config.kernel_size.get(),
-                                                 config.distanceTransform_threshold.get(),
-                                                 config.dilation_iterations.get())
+        smaller_real_average_area = count_grains(image_path, config_watershedAll.scale_factor.get(),
+                                                 config_watershedAll.scale_bar_pixels_per_mm.get(),
+                                                 config_watershedAll.grayscale_threshold.get(),
+                                                 config_watershedAll.smaller_grain_area_min.get(),
+                                                 config_watershedAll.smaller_grain_area_max.get(),
+                                                 config_watershedAll.larger_grain_area_min.get(),
+                                                 config_watershedAll.larger_grain_area_max.get(),
+                                                 config_watershedAll.uncertain_grain_area_min.get(),
+                                                 config_watershedAll.uncertain_grain_area_max.get(),
+                                                 config_watershedAll.bottom_crop_ratio.get(),
+                                                 config_watershedAll.kernel_size.get(),
+                                                 config_watershedAll.distanceTransform_threshold.get(),
+                                                 config_watershedAll.dilation_iterations.get())
 
     if grayscale_image_cv is not None and outlined_image_cv is not None:
 
         print(f"-----------------------------------------------------------------------------------")
         print(f"VISIBLE GRAIN COUNT...")
         print(
-            f"The number of smaller {config.smaller_grain_area_min.get()} to {config.smaller_grain_area_max.get()} pixel Al grains visible: "
+            f"The number of smaller {config_watershedAll.smaller_grain_area_min.get()} to {config_watershedAll.smaller_grain_area_max.get()} pixel Al grains visible: "
             f"{smaller_grain_count}")
         print(
-            f"The number of larger {config.larger_grain_area_min.get()} to {config.larger_grain_area_max.get()} pixel Al grains visible: "
+            f"The number of larger {config_watershedAll.larger_grain_area_min.get()} to {config_watershedAll.larger_grain_area_max.get()} pixel Al grains visible: "
             f"{larger_grain_count}")
         print(f"The total number of certain visible Al Grains: {smaller_grain_count + larger_grain_count}")
         print(
-            f"The number of uncertain {config.uncertain_grain_area_min.get()} to {config.uncertain_grain_area_max.get()} pixel Al grains visible: "
+            f"The number of uncertain {config_watershedAll.uncertain_grain_area_min.get()} to {config_watershedAll.uncertain_grain_area_max.get()} pixel Al grains visible: "
             f"{uncertain_grain_count}")
         print(f"VISIBLE GRAIN AREA...")
         print(
-            f"The average visible surface area of the smaller {config.smaller_grain_area_min.get()} to {config.smaller_grain_area_max.get()} "
+            f"The average visible surface area of the smaller {config_watershedAll.smaller_grain_area_min.get()} to {config_watershedAll.smaller_grain_area_max.get()} "
             f"pixel Al grains: {smaller_real_average_area:.4f} mm^2")
         print(
-            f"The average visible surface area of the larger {config.larger_grain_area_min.get()} to {config.larger_grain_area_max.get()} "
+            f"The average visible surface area of the larger {config_watershedAll.larger_grain_area_min.get()} to {config_watershedAll.larger_grain_area_max.get()} "
             f"pixel Al grains: {larger_real_average_area:.4f} mm^2")
         print(
-            f"The average visible surface area of the uncertain {config.uncertain_grain_area_min.get()} to {config.uncertain_grain_area_max.get()} "
+            f"The average visible surface area of the uncertain {config_watershedAll.uncertain_grain_area_min.get()} to {config_watershedAll.uncertain_grain_area_max.get()} "
             f"pixel Al grains: {uncertain_real_average_area:.4f} mm^2")
         print(f"-----------------------------------------------------------------------------------")
 
@@ -225,19 +225,19 @@ def select_file():
 
 
 def reset_values():
-    config.scale_factor.set(1.0)
-    config.scale_bar_pixels_per_mm.set(255.9812)
-    config.grayscale_threshold.set(190)
-    config.bottom_crop_ratio.set(0.05)
-    config.smaller_grain_area_min.set(9000)
-    config.smaller_grain_area_max.set(50000)
-    config.larger_grain_area_min.set(50000)
-    config.larger_grain_area_max.set(100000)
-    config.uncertain_grain_area_min.set(100000)
-    config.uncertain_grain_area_max.set(400000)
-    config.kernel_size.set(3)
-    config.distanceTransform_threshold.set(0.15)
-    config.dilation_iterations.set(1)
+    config_watershedAll.scale_factor.set(1.0)
+    config_watershedAll.scale_bar_pixels_per_mm.set(255.9812)
+    config_watershedAll.grayscale_threshold.set(190)
+    config_watershedAll.bottom_crop_ratio.set(0.05)
+    config_watershedAll.smaller_grain_area_min.set(9000)
+    config_watershedAll.smaller_grain_area_max.set(50000)
+    config_watershedAll.larger_grain_area_min.set(50000)
+    config_watershedAll.larger_grain_area_max.set(100000)
+    config_watershedAll.uncertain_grain_area_min.set(100000)
+    config_watershedAll.uncertain_grain_area_max.set(400000)
+    config_watershedAll.kernel_size.set(3)
+    config_watershedAll.distanceTransform_threshold.set(0.15)
+    config_watershedAll.dilation_iterations.set(1)
 
 
 
