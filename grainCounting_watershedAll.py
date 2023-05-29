@@ -39,23 +39,55 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
 
     thresholded_image_3chan = cv2.cvtColor(thresholded_image, cv2.COLOR_GRAY2BGR)
 
+    # # Distance transformation
+    # distance_transform = cv2.distanceTransform(thresholded_image, cv2.DIST_L2, 3) ########################################################################################
+    # _, sure_foreground = cv2.threshold(distance_transform, distanceTransform_threshold * distance_transform.max(), 255, 0) ##################################################################
+    # sure_foreground = np.uint8(sure_foreground) #####################################################################################################################
+    #
+    # # Create a kernel for dilation
+    # kernel = np.ones((kernel_size, kernel_size), np.uint8) #######################################
+    # sure_background = cv2.dilate(thresholded_image, kernel, iterations=dilation_iterations) ########################################################################################
+    # uncertain_region = cv2.subtract(sure_background, sure_foreground) ###############################################################################################
+    #
+    # _, markers = cv2.connectedComponents(sure_foreground) ###########################################################################################################
+    # markers = markers + 1 ###########################################################################################################################################
+    # markers[uncertain_region == 255] = 0 ############################################################################################################################
+    # markers = markers.astype(np.int32)
+
     # Distance transformation
-    distance_transform = cv2.distanceTransform(thresholded_image, cv2.DIST_L2, 3) ########################################################################################
-    _, sure_foreground = cv2.threshold(distance_transform, distanceTransform_threshold * distance_transform.max(), 255, 0) ##################################################################
-    sure_foreground = np.uint8(sure_foreground) #####################################################################################################################
+    dt = cv2.distanceTransform(thresholded_image, cv2.DIST_L2, 3)
+    dt = ((dt - dt.min()) / (dt.max() - dt.min()) * 255).astype(np.uint8)
+    _, dt = cv2.threshold(dt, 180, 255, cv2.THRESH_BINARY)
 
-    # Create a kernel for dilation
-    kernel = np.ones((kernel_size, kernel_size), np.uint8) #######################################
-    sure_background = cv2.dilate(thresholded_image, kernel, iterations=dilation_iterations) ########################################################################################
-    uncertain_region = cv2.subtract(sure_background, sure_foreground) ###############################################################################################
+    border = cv2.dilate(thresholded_image, None, iterations=5)
+    border = border - cv2.erode(border, None)
 
-    _, markers = cv2.connectedComponents(sure_foreground) ###########################################################################################################
-    markers = markers + 1 ###########################################################################################################################################
-    markers[uncertain_region == 255] = 0 ############################################################################################################################
+    dt = dt.astype(np.uint8)
+    _, dt = cv2.threshold(dt, 180, 255, cv2.THRESH_BINARY)
+    _, markers = cv2.connectedComponents(dt)
+
+    # Completing the markers now.
+    markers[border == 255] = 255
     markers = markers.astype(np.int32)
 
     # The watershed algorithm modifies the markers image
     cv2.watershed(thresholded_image_3chan, markers) ###################################################################################################################################
+    image[markers == -1] = [0, 0, 255]
+
+    # Invert the result and convert to 8-bit image
+    result = cv2.convertScaleAbs(255 - markers)
+
+    # Create a binary image that marks the borders (where markers == -1) as black (0) and everything else as white (255)
+    border_mask = np.where(markers == -1, 0, 255).astype(np.uint8)
+
+    # Dilate the border mask to increase the border thickness
+    border_mask = cv2.dilate(border_mask, None, iterations=3)  # adjust the number of iterations as needed
+
+    # Apply the mask to the result image
+    result = cv2.bitwise_and(result, border_mask)
+
+    # Dilate the result
+    # result = cv2.dilate(result, border_mask)
 
     # Create a new binary image where the separated grains are white and everything else is black
     separated_grains_image = np.where(markers > 1, 255, 0).astype(np.uint8) #########################################################################################
@@ -113,7 +145,7 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     # Return the number of chocolate chips, the outlined image, the thresholded image and the average area
     return len(larger_grain_contours), len(
         smaller_grain_contours), len(
-        uncertain_grain_contours), result_image, separated_grains_image, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm
+        uncertain_grain_contours), result_image, result, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm
 
 
 def display_images(grayscale_image_cv, outlined_image_cv):
