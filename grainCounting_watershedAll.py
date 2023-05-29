@@ -12,7 +12,7 @@ from skimage.segmentation import watershed
 
 def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_threshold, smaller_grain_area_min,
                  smaller_grain_area_max, larger_grain_area_min, larger_grain_area_max, uncertain_grain_area_min,
-                 uncertain_grain_area_max, bottom_crop_ratio, kernel_size, uncertain_grayscale_threshold):
+                 uncertain_grain_area_max, bottom_crop_ratio, kernel_size, distanceTransform_threshold, dilation_iterations):
     # Load the image
     image = cv2.imread(image_path)
 
@@ -36,19 +36,32 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     # Apply a threshold to the grayscale image
     _, thresholded_image = cv2.threshold(gray_image, grayscale_threshold, 255, cv2.THRESH_BINARY)
 
-    # Find contours in the thresholded image
-    contours, _ = cv2.findContours(thresholded_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    thresholded_image_3chan = cv2.cvtColor(thresholded_image, cv2.COLOR_GRAY2BGR)
 
-    # Find uncertain grain contours to apply blur before contour drawing of the whole image
-    uncertain_grain_contours = [contour for contour in contours
-                                if uncertain_grain_area_min < cv2.contourArea(contour) < uncertain_grain_area_max]
+    # Now we apply the watershed algorithm to the masked image
+    # Distance transformation
+    distance_transform = cv2.distanceTransform(thresholded_image, cv2.DIST_L2, 5) ########################################################################################
+    _, sure_foreground = cv2.threshold(distance_transform, 0.15 * distance_transform.max(), 255, 0) ##################################################################
+    sure_foreground = np.uint8(sure_foreground) #####################################################################################################################
 
-    # Apply blur to uncertain grain areas
-    blurred_image = apply_mask_and_blur(thresholded_image, uncertain_grain_contours, kernel_size, uncertain_grayscale_threshold)
+    # Create a kernel for dilation
+    kernel = np.ones((3, 3), np.uint8) #######################################
+    sure_background = cv2.dilate(thresholded_image, kernel, iterations=1) ########################################################################################
+    uncertain_region = cv2.subtract(sure_background, sure_foreground) ###############################################################################################
 
+    _, markers = cv2.connectedComponents(sure_foreground) ###########################################################################################################
+    markers = markers + 1 ###########################################################################################################################################
+    markers[uncertain_region == 255] = 0 ############################################################################################################################
+    markers = markers.astype(np.int32)
+
+    # The watershed algorithm modifies the markers image
+    cv2.watershed(thresholded_image_3chan, markers) ###################################################################################################################################
+
+    # Create a new binary image where the separated grains are white and everything else is black
+    separated_grains_image = np.where(markers > 1, 255, 0).astype(np.uint8) #########################################################################################
 
     # Find contours in the new blurred_image
-    contours, _ = cv2.findContours(blurred_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(separated_grains_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Initialise contours and contour areas
     uncertain_grain_contours = []
@@ -100,7 +113,7 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     # Return the number of chocolate chips, the outlined image, the thresholded image and the average area
     return len(larger_grain_contours), len(
         smaller_grain_contours), len(
-        uncertain_grain_contours), result_image, blurred_image, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm
+        uncertain_grain_contours), result_image, separated_grains_image, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm
 
 
 def display_images(grayscale_image_cv, outlined_image_cv):
@@ -133,7 +146,8 @@ def run_grain_counting():
                                                  config.uncertain_grain_area_max.get(),
                                                  config.bottom_crop_ratio.get(),
                                                  config.kernel_size.get(),
-                                                 config.uncertain_grayscale_threshold.get())
+                                                 config.distanceTransform_threshold.get(),
+                                                 config.dilation_iterations.get())
 
     if grayscale_image_cv is not None and outlined_image_cv is not None:
 
@@ -189,58 +203,9 @@ def reset_values():
     config.larger_grain_area_max.set(100000)
     config.uncertain_grain_area_min.set(100000)
     config.uncertain_grain_area_max.set(400000)
-    config.kernel_size.set(5)
-    config.uncertain_grayscale_threshold.set(200)
-
-
-def apply_mask_and_blur(image, contours, kernel_size, uncertain_grayscale_threshold):
-    # Create an empty mask to start with
-    mask = np.zeros(image.shape[:2], dtype=np.uint8)  # Ensuring mask size and shape
-
-    # Draw filled contours on mask
-    cv2.drawContours(mask, contours, -1, 255, thickness=cv2.FILLED)  # Mask requires single channel
-
-    # Apply the mask to the image
-    masked_image = cv2.bitwise_and(image, image, mask=mask)
-
-    # # Apply the blur to the masked image
-    blurred_image = cv2.GaussianBlur(masked_image, (kernel_size, kernel_size), 0)
-    blurred_image_3chan = cv2.cvtColor(blurred_image, cv2.COLOR_GRAY2BGR)
-
-    # Now we apply the watershed algorithm to the masked image
-    # Distance transformation
-    distance_transform = cv2.distanceTransform(blurred_image, cv2.DIST_L2, 5) ########################################################################################
-    _, sure_foreground = cv2.threshold(distance_transform, 0.15 * distance_transform.max(), 255, 0) ##################################################################
-    sure_foreground = np.uint8(sure_foreground) #####################################################################################################################
-
-    # Create a kernel for dilation
-    kernel = np.ones((1, 1), np.uint8) #######################################
-    sure_background = cv2.dilate(blurred_image, kernel, iterations=1) ########################################################################################
-    uncertain_region = cv2.subtract(sure_background, sure_foreground) ###############################################################################################
-
-    _, markers = cv2.connectedComponents(sure_foreground) ###########################################################################################################
-    markers = markers + 1 ###########################################################################################################################################
-    markers[uncertain_region == 255] = 0 ############################################################################################################################
-    markers = markers.astype(np.int32)
-
-    # The watershed algorithm modifies the markers image
-    cv2.watershed(blurred_image_3chan, markers) ###################################################################################################################################
-
-    # Create a new binary image where the separated grains are white and everything else is black
-    separated_grains_image = np.where(markers > 1, 255, 0).astype(np.uint8) #########################################################################################
-
-    # # Adjust the contrast of the blurred image using thresholding
-    # _, adjusted_image = cv2.threshold(blurred_image, uncertain_grayscale_threshold, 255, cv2.THRESH_BINARY)
-
-    # Combine the blurred part with the original image
-    inv_mask = cv2.bitwise_not(mask)
-    image_bg = cv2.bitwise_and(image, image, mask=inv_mask)
-    # combined_image = cv2.bitwise_or(image_bg, adjusted_image)
-    # Combine the separated grains image with the original image
-    combined_image = cv2.bitwise_or(image_bg, separated_grains_image)
-
-    return combined_image
-
+    config.kernel_size.set(1)
+    config.distanceTransform_threshold.set(0.7)
+    config.dilation_iterations.set(1)
 
 
 
