@@ -41,12 +41,12 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     # Now we apply the watershed algorithm to the masked image
     # Distance transformation
     distance_transform = cv2.distanceTransform(thresholded_image, cv2.DIST_L2, 5) ########################################################################################
-    _, sure_foreground = cv2.threshold(distance_transform, 0.15 * distance_transform.max(), 255, 0) ##################################################################
+    _, sure_foreground = cv2.threshold(distance_transform, distanceTransform_threshold * distance_transform.max(), 255, 0) ##################################################################
     sure_foreground = np.uint8(sure_foreground) #####################################################################################################################
 
     # Create a kernel for dilation
-    kernel = np.ones((3, 3), np.uint8) #######################################
-    sure_background = cv2.dilate(thresholded_image, kernel, iterations=1) ########################################################################################
+    kernel = np.ones((kernel_size, kernel_size), np.uint8) #######################################
+    sure_background = cv2.dilate(thresholded_image, kernel, iterations=dilation_iterations) ########################################################################################
     uncertain_region = cv2.subtract(sure_background, sure_foreground) ###############################################################################################
 
     _, markers = cv2.connectedComponents(sure_foreground) ###########################################################################################################
@@ -203,8 +203,8 @@ def reset_values():
     config.larger_grain_area_max.set(100000)
     config.uncertain_grain_area_min.set(100000)
     config.uncertain_grain_area_max.set(400000)
-    config.kernel_size.set(1)
-    config.distanceTransform_threshold.set(0.7)
+    config.kernel_size.set(3)
+    config.distanceTransform_threshold.set(0.15)
     config.dilation_iterations.set(1)
 
 

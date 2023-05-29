@@ -21,8 +21,8 @@ def init_variables(root):
     grayscale_threshold = tk.IntVar(value=190)
     bottom_crop_ratio = tk.DoubleVar(value=0.05)
 
-    kernel_size = tk.IntVar(value=1)
-    distanceTransform_threshold = tk.IntVar(value=0.7)
+    kernel_size = tk.IntVar(value=3)
+    distanceTransform_threshold = tk.DoubleVar(value=0.15)
     dilation_iterations = tk.IntVar(value=1)
 
     smaller_grain_area_min = tk.IntVar(value=9000)
