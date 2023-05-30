@@ -1,6 +1,6 @@
 import tkinter as tk
 import config
-import grainCounting_watershedAll
+import grainCounting
 
 root = tk.Tk()
 root.title("Grain Counting Parameters")
@@ -52,13 +52,13 @@ root.grid_columnconfigure(0, weight=1, minsize=20)  # Add padding on left side
 root.grid_columnconfigure(3, weight=1, minsize=10)  # Add padding on right side
 
 # Add a button to re-run the grain counting
-tk.Button(root, text="Run Grain Counting", command=grainCounting_watershedAll.run_grain_counting).grid(row=15, column=0, pady=10)
+tk.Button(root, text="Run Grain Counting", command=grainCounting.run_grain_counting).grid(row=15, column=0, pady=10)
 
 # Add a button to reset the parameters to their default values
-tk.Button(root, text="Reset Values", command=grainCounting_watershedAll.reset_values).grid(row=15, column=2, pady=10)
+tk.Button(root, text="Reset Values", command=grainCounting.reset_values).grid(row=15, column=2, pady=10)
 
 # Add a button to select a file
-tk.Button(root, text="Select File", command=grainCounting_watershedAll.select_file).grid(row=15, column=1, pady=10, padx=10)
+tk.Button(root, text="Select File", command=grainCounting.select_file).grid(row=15, column=1, pady=10, padx=10)
 
 
 root.mainloop()

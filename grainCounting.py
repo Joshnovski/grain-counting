@@ -155,9 +155,9 @@ def run_grain_counting():
         print(
             f"The average visible surface area of the larger {config.larger_grain_area_min.get()} to {config.larger_grain_area_max.get()} "
             f"pixel Al grains: {larger_real_average_area:.4f} mm^2")
-        print(
-            f"The average visible surface area of the uncertain {config.uncertain_grain_area_min.get()} to {config.uncertain_grain_area_max.get()} "
-            f"pixel Al grains: {uncertain_real_average_area:.4f} mm^2")
+        # print(
+        #     f"The average visible surface area of the uncertain {config.uncertain_grain_area_min.get()} to {config.uncertain_grain_area_max.get()} "
+        #     f"pixel Al grains: {uncertain_real_average_area:.4f} mm^2")
         print(f"-----------------------------------------------------------------------------------")
 
         display_images(grayscale_image_cv, outlined_image_cv)
@@ -208,25 +208,25 @@ def apply_mask_and_blur(image, contours, kernel_size, uncertain_grayscale_thresh
 
     # Now we apply the watershed algorithm to the masked image
     # Distance transformation
-    distance_transform = cv2.distanceTransform(blurred_image, cv2.DIST_L2, 5) ########################################################################################
-    _, sure_foreground = cv2.threshold(distance_transform, 0.15 * distance_transform.max(), 255, 0) ##################################################################
-    sure_foreground = np.uint8(sure_foreground) #####################################################################################################################
+    distance_transform = cv2.distanceTransform(blurred_image, cv2.DIST_L2, 5)
+    _, sure_foreground = cv2.threshold(distance_transform, 0.15 * distance_transform.max(), 255, 0)
+    sure_foreground = np.uint8(sure_foreground)
 
     # Create a kernel for dilation
-    kernel = np.ones((1, 1), np.uint8) #######################################
-    sure_background = cv2.dilate(blurred_image, kernel, iterations=1) ########################################################################################
-    uncertain_region = cv2.subtract(sure_background, sure_foreground) ###############################################################################################
+    kernel = np.ones((1, 1), np.uint8)
+    sure_background = cv2.dilate(blurred_image, kernel, iterations=1)
+    uncertain_region = cv2.subtract(sure_background, sure_foreground)
 
-    _, markers = cv2.connectedComponents(sure_foreground) ###########################################################################################################
-    markers = markers + 1 ###########################################################################################################################################
-    markers[uncertain_region == 255] = 0 ############################################################################################################################
+    _, markers = cv2.connectedComponents(sure_foreground)
+    markers = markers + 1
+    markers[uncertain_region == 255] = 0
     markers = markers.astype(np.int32)
 
     # The watershed algorithm modifies the markers image
-    cv2.watershed(blurred_image_3chan, markers) ###################################################################################################################################
+    cv2.watershed(blurred_image_3chan, markers)
 
     # Create a new binary image where the separated grains are white and everything else is black
-    separated_grains_image = np.where(markers > 1, 255, 0).astype(np.uint8) #########################################################################################
+    separated_grains_image = np.where(markers > 1, 255, 0).astype(np.uint8)
 
     # # Adjust the contrast of the blurred image using thresholding
     # _, adjusted_image = cv2.threshold(blurred_image, uncertain_grayscale_threshold, 255, cv2.THRESH_BINARY)

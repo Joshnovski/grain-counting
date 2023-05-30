@@ -55,8 +55,8 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     # markers = markers.astype(np.int32)
 
     # Distance transformation
-    dt = cv2.distanceTransform(thresholded_image, cv2.DIST_L2, 3)
-    dt = ((dt - dt.min()) / (dt.max() - dt.min()) * 255).astype(np.uint8)
+    dt2 = cv2.distanceTransform(thresholded_image, cv2.DIST_L2, 3)
+    dt = ((dt2 - dt2.min()) / (dt2.max() - dt2.min()) * 255).astype(np.uint8)
     _, dt = cv2.threshold(dt, 80, 255, cv2.THRESH_BINARY)
 
     border = cv2.dilate(thresholded_image, None, iterations=5)
@@ -141,7 +141,7 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     # Return the number of chocolate chips, the outlined image, the thresholded image and the average area
     return len(larger_grain_contours), len(
         smaller_grain_contours), len(
-        uncertain_grain_contours), result_image, result, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm
+        uncertain_grain_contours), result_image, dt2, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm
 
 
 def display_images(grayscale_image_cv, outlined_image_cv):
