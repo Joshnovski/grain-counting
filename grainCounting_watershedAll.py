@@ -57,13 +57,12 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     # Distance transformation
     dt = cv2.distanceTransform(thresholded_image, cv2.DIST_L2, 3)
     dt = ((dt - dt.min()) / (dt.max() - dt.min()) * 255).astype(np.uint8)
-    _, dt = cv2.threshold(dt, 180, 255, cv2.THRESH_BINARY)
+    _, dt = cv2.threshold(dt, 80, 255, cv2.THRESH_BINARY)
 
     border = cv2.dilate(thresholded_image, None, iterations=5)
     border = border - cv2.erode(border, None)
 
     dt = dt.astype(np.uint8)
-    _, dt = cv2.threshold(dt, 180, 255, cv2.THRESH_BINARY)
     _, markers = cv2.connectedComponents(dt)
 
     # Completing the markers now.
@@ -79,9 +78,6 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
 
     # Create a binary image that marks the borders (where markers == -1) as black (0) and everything else as white (255)
     border_mask = np.where(markers == -1, 0, 255).astype(np.uint8)
-
-    # Dilate the border mask to increase the border thickness
-    border_mask = cv2.dilate(border_mask, None, iterations=3)  # adjust the number of iterations as needed
 
     # Apply the mask to the result image
     result = cv2.bitwise_and(result, border_mask)
