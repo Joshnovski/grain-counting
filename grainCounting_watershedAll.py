@@ -31,10 +31,10 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Smooth out noise with slight blur to assist with thresholding
-    gray_image_blurred = cv2.GaussianBlur(gray_image, (5, 5), 0)
+    gray_image_blurred = cv2.GaussianBlur(gray_image, (3, 3), 0)
 
     # Apply a threshold to the grayscale image
-    _, thresholded_image = cv2.threshold(gray_image_blurred, 0, 255, cv2.THRESH_OTSU)
+    _, thresholded_image = cv2.threshold(gray_image_blurred, 170, 255, cv2.THRESH_BINARY) #raise lower number to remove bits attatched to grains
     thresholded_image = cv2.morphologyEx(thresholded_image, cv2.MORPH_OPEN, np.ones((3, 3), dtype=int)) # Increasing seems to remove surrounding elements from being contoured. Was 3
 
     thresholded_image_3chan = cv2.cvtColor(thresholded_image, cv2.COLOR_GRAY2BGR)
@@ -42,7 +42,7 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     # Distance transformation
     dt = cv2.distanceTransform(thresholded_image, cv2.DIST_L2, 3)
     dt = ((dt - dt.min()) / (dt.max() - dt.min()) * 255).astype(np.uint8)
-    _, dt = cv2.threshold(dt, 80, 255, cv2.THRESH_BINARY)
+    _, dt = cv2.threshold(dt, 60, 255, cv2.THRESH_BINARY) # Lower the lower number to include more grains (too low and starts to add very small grains)
 
     border = cv2.dilate(thresholded_image, None, iterations=5)
     border = border - cv2.erode(border, None)
@@ -57,7 +57,7 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     # The watershed algorithm modifies the markers image
     cv2.watershed(thresholded_image_3chan,
                   markers)
-    image[markers == -1] = [0, 0, 255]
+    # image[markers == -1] = [0, 0, 255]
 
     # Invert the result and convert to 8-bit image
     result = cv2.convertScaleAbs(255 - markers)
@@ -73,7 +73,7 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
         np.uint8)
 
     # Find contours in the new blurred_image
-    contours, _ = cv2.findContours(separated_grains_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(result, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Initialise contours and contour areas
     uncertain_grain_contours = []
