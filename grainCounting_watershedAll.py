@@ -5,14 +5,12 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Cursor
 import config_watershedAll
 from tkinter import filedialog
-from scipy import ndimage as ndi
-from skimage.feature import peak_local_max
-from skimage.segmentation import watershed
 
 
 def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_threshold, smaller_grain_area_min,
                  smaller_grain_area_max, larger_grain_area_min, larger_grain_area_max, uncertain_grain_area_min,
-                 uncertain_grain_area_max, bottom_crop_ratio, kernel_size, distanceTransform_threshold, dilation_iterations):
+                 uncertain_grain_area_max, bottom_crop_ratio, kernel_size, distanceTransform_threshold,
+                 dilation_iterations):
     # Load the image
     image = cv2.imread(image_path)
 
@@ -32,31 +30,18 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     # Convert the image to grayscale
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
+    # Smooth out noise with slight blur to assist with thresholding
+    gray_image_blurred = cv2.GaussianBlur(gray_image, (5, 5), 0)
 
     # Apply a threshold to the grayscale image
-    _, thresholded_image = cv2.threshold(gray_image, 0, 255, cv2.THRESH_OTSU)
-    thresholded_image = cv2.morphologyEx(thresholded_image, cv2.MORPH_OPEN, np.ones((3, 3), dtype=int))
+    _, thresholded_image = cv2.threshold(gray_image_blurred, 0, 255, cv2.THRESH_OTSU)
+    thresholded_image = cv2.morphologyEx(thresholded_image, cv2.MORPH_OPEN, np.ones((3, 3), dtype=int)) # Increasing seems to remove surrounding elements from being contoured. Was 3
 
     thresholded_image_3chan = cv2.cvtColor(thresholded_image, cv2.COLOR_GRAY2BGR)
 
-    # # Distance transformation
-    # distance_transform = cv2.distanceTransform(thresholded_image, cv2.DIST_L2, 3) ########################################################################################
-    # _, sure_foreground = cv2.threshold(distance_transform, distanceTransform_threshold * distance_transform.max(), 255, 0) ##################################################################
-    # sure_foreground = np.uint8(sure_foreground) #####################################################################################################################
-    #
-    # # Create a kernel for dilation
-    # kernel = np.ones((kernel_size, kernel_size), np.uint8) #######################################
-    # sure_background = cv2.dilate(thresholded_image, kernel, iterations=dilation_iterations) ########################################################################################
-    # uncertain_region = cv2.subtract(sure_background, sure_foreground) ###############################################################################################
-    #
-    # _, markers = cv2.connectedComponents(sure_foreground) ###########################################################################################################
-    # markers = markers + 1 ###########################################################################################################################################
-    # markers[uncertain_region == 255] = 0 ############################################################################################################################
-    # markers = markers.astype(np.int32)
-
     # Distance transformation
-    dt2 = cv2.distanceTransform(thresholded_image, cv2.DIST_L2, 3)
-    dt = ((dt2 - dt2.min()) / (dt2.max() - dt2.min()) * 255).astype(np.uint8)
+    dt = cv2.distanceTransform(thresholded_image, cv2.DIST_L2, 3)
+    dt = ((dt - dt.min()) / (dt.max() - dt.min()) * 255).astype(np.uint8)
     _, dt = cv2.threshold(dt, 80, 255, cv2.THRESH_BINARY)
 
     border = cv2.dilate(thresholded_image, None, iterations=5)
@@ -70,7 +55,8 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     markers = markers.astype(np.int32)
 
     # The watershed algorithm modifies the markers image
-    cv2.watershed(thresholded_image_3chan, markers) ###################################################################################################################################
+    cv2.watershed(thresholded_image_3chan,
+                  markers)
     image[markers == -1] = [0, 0, 255]
 
     # Invert the result and convert to 8-bit image
@@ -82,11 +68,9 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     # Apply the mask to the result image
     result = cv2.bitwise_and(result, border_mask)
 
-    # Dilate the result
-    # result = cv2.dilate(result, border_mask)
-
     # Create a new binary image where the separated grains are white and everything else is black
-    separated_grains_image = np.where(markers > 1, 255, 0).astype(np.uint8) #########################################################################################
+    separated_grains_image = np.where(markers > 1, 255, 0).astype(
+        np.uint8)
 
     # Find contours in the new blurred_image
     contours, _ = cv2.findContours(separated_grains_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -141,7 +125,7 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     # Return the number of chocolate chips, the outlined image, the thresholded image and the average area
     return len(larger_grain_contours), len(
         smaller_grain_contours), len(
-        uncertain_grain_contours), result_image, dt2, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm
+        uncertain_grain_contours), result_image, result, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm
 
 
 def display_images(grayscale_image_cv, outlined_image_cv):
@@ -234,10 +218,3 @@ def reset_values():
     config_watershedAll.kernel_size.set(3)
     config_watershedAll.distanceTransform_threshold.set(0.15)
     config_watershedAll.dilation_iterations.set(1)
-
-
-
-
-
-
-
