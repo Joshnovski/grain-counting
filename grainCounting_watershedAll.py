@@ -9,8 +9,7 @@ from tkinter import filedialog
 
 def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_threshold, smaller_grain_area_min,
                  smaller_grain_area_max, larger_grain_area_min, larger_grain_area_max, uncertain_grain_area_min,
-                 uncertain_grain_area_max, bottom_crop_ratio, kernel_size, distanceTransform_threshold,
-                 dilation_iterations):
+                 uncertain_grain_area_max, bottom_crop_ratio, kernel_size, distanceTransform_threshold):
     # Load the image
     image = cv2.imread(image_path)
 
@@ -31,18 +30,18 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Smooth out noise with slight blur to assist with thresholding
-    gray_image_blurred = cv2.GaussianBlur(gray_image, (3, 3), 0)
+    gray_image_blurred = cv2.GaussianBlur(gray_image, (kernel_size, kernel_size), 0)
 
     # Apply a threshold to the grayscale image
-    _, thresholded_image = cv2.threshold(gray_image_blurred, 170, 255, cv2.THRESH_BINARY) #raise lower number to remove bits attatched to grains
-    thresholded_image = cv2.morphologyEx(thresholded_image, cv2.MORPH_OPEN, np.ones((3, 3), dtype=int)) # Increasing seems to remove surrounding elements from being contoured. Was 3
+    _, thresholded_image = cv2.threshold(gray_image_blurred, grayscale_threshold, 255, cv2.THRESH_BINARY) #raise lower number to remove bits attatched to grains
+    thresholded_image = cv2.morphologyEx(thresholded_image, cv2.MORPH_OPEN, np.ones((3, 3), dtype=int))
 
     thresholded_image_3chan = cv2.cvtColor(thresholded_image, cv2.COLOR_GRAY2BGR)
 
     # Distance transformation
     dt = cv2.distanceTransform(thresholded_image, cv2.DIST_L2, 3)
     dt = ((dt - dt.min()) / (dt.max() - dt.min()) * 255).astype(np.uint8)
-    _, dt = cv2.threshold(dt, 60, 255, cv2.THRESH_BINARY) # Lower the lower number to include more grains (too low and starts to add very small grains)
+    _, dt = cv2.threshold(dt, distanceTransform_threshold, 255, cv2.THRESH_BINARY) # Lower the lower number to include more grains (too low and starts to add very small grains)
 
     border = cv2.dilate(thresholded_image, None, iterations=5)
     border = border - cv2.erode(border, None)
@@ -55,22 +54,25 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     markers = markers.astype(np.int32)
 
     # The watershed algorithm modifies the markers image
-    cv2.watershed(thresholded_image_3chan,
-                  markers)
+    cv2.watershed(thresholded_image_3chan, markers)
     # image[markers == -1] = [0, 0, 255]
 
-    # Invert the result and convert to 8-bit image
-    result = cv2.convertScaleAbs(255 - markers)
+    # Create a binary image that marks the borders (where markers == -1)
+    border_mask = np.where(markers == -1, 255, 0).astype(np.uint8)
 
-    # Create a binary image that marks the borders (where markers == -1) as black (0) and everything else as white (255)
-    border_mask = np.where(markers == -1, 0, 255).astype(np.uint8)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))  # You can change the size as needed
+    dilated_border_mask = cv2.dilate(border_mask, kernel, iterations=2)  # You can change the number of iterations as needed
+
+    # Create a grayscale image where the separated grains have their marker values (with the labels gradient) and everything else is white
+    separated_grains_image = np.where(markers > 1, markers, 255).astype(np.uint8)
+
+    # Normalize the separated_grains_image to have a full range of grayscale values
+    separated_grains_image = cv2.normalize(separated_grains_image, None, 0, 255, cv2.NORM_MINMAX)
 
     # Apply the mask to the result image
-    result = cv2.bitwise_and(result, border_mask)
-
-    # Create a new binary image where the separated grains are white and everything else is black
-    separated_grains_image = np.where(markers > 1, 255, 0).astype(
-        np.uint8)
+    # result = cv2.bitwise_or(separated_grains_image, dilated_border_mask)
+    result = np.where(dilated_border_mask == 255, dilated_border_mask, separated_grains_image)
+    result = 255 - result
 
     # Find contours in the new blurred_image
     contours, _ = cv2.findContours(result, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -158,8 +160,7 @@ def run_grain_counting():
                                                  config_watershedAll.uncertain_grain_area_max.get(),
                                                  config_watershedAll.bottom_crop_ratio.get(),
                                                  config_watershedAll.kernel_size.get(),
-                                                 config_watershedAll.distanceTransform_threshold.get(),
-                                                 config_watershedAll.dilation_iterations.get())
+                                                 config_watershedAll.distanceTransform_threshold.get())
 
     if grayscale_image_cv is not None and outlined_image_cv is not None:
 
@@ -182,9 +183,9 @@ def run_grain_counting():
         print(
             f"The average visible surface area of the larger {config_watershedAll.larger_grain_area_min.get()} to {config_watershedAll.larger_grain_area_max.get()} "
             f"pixel Al grains: {larger_real_average_area:.4f} mm^2")
-        print(
-            f"The average visible surface area of the uncertain {config_watershedAll.uncertain_grain_area_min.get()} to {config_watershedAll.uncertain_grain_area_max.get()} "
-            f"pixel Al grains: {uncertain_real_average_area:.4f} mm^2")
+        # print(
+        #     f"The average visible surface area of the uncertain {config_watershedAll.uncertain_grain_area_min.get()} to {config_watershedAll.uncertain_grain_area_max.get()} "
+        #     f"pixel Al grains: {uncertain_real_average_area:.4f} mm^2")
         print(f"-----------------------------------------------------------------------------------")
 
         display_images(grayscale_image_cv, outlined_image_cv)
@@ -215,6 +216,5 @@ def reset_values():
     config_watershedAll.larger_grain_area_max.set(100000)
     config_watershedAll.uncertain_grain_area_min.set(100000)
     config_watershedAll.uncertain_grain_area_max.set(400000)
-    config_watershedAll.kernel_size.set(3)
-    config_watershedAll.distanceTransform_threshold.set(0.15)
-    config_watershedAll.dilation_iterations.set(1)
+    config_watershedAll.kernel_size.set(15)
+    config_watershedAll.distanceTransform_threshold.set(70)
