@@ -14,6 +14,7 @@ def init_variables(root):
     global uncertain_grain_area_max
     global kernel_size
     global distanceTransform_threshold
+    global grain_morphology
 
     scale_factor = tk.DoubleVar(value=1.0)
     scale_bar_pixels_per_mm = tk.DoubleVar(value=255.9812)
@@ -22,6 +23,7 @@ def init_variables(root):
 
     kernel_size = tk.IntVar(value=15)
     distanceTransform_threshold = tk.IntVar(value=70)
+    grain_morphology = tk.IntVar(value=3)
 
     smaller_grain_area_min = tk.IntVar(value=9000)
     smaller_grain_area_max = tk.IntVar(value=50000)

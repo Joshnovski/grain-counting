@@ -9,7 +9,7 @@ from tkinter import filedialog
 
 def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_threshold, smaller_grain_area_min,
                  smaller_grain_area_max, larger_grain_area_min, larger_grain_area_max, uncertain_grain_area_min,
-                 uncertain_grain_area_max, bottom_crop_ratio, kernel_size, distanceTransform_threshold):
+                 uncertain_grain_area_max, bottom_crop_ratio, kernel_size, distanceTransform_threshold, grain_morphology):
     # Load the image
     image = cv2.imread(image_path)
 
@@ -34,7 +34,7 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
 
     # Apply a threshold to the grayscale image
     _, thresholded_image = cv2.threshold(gray_image_blurred, grayscale_threshold, 255, cv2.THRESH_BINARY) #raise lower number to remove bits attatched to grains
-    thresholded_image = cv2.morphologyEx(thresholded_image, cv2.MORPH_OPEN, np.ones((3, 3), dtype=int))
+    thresholded_image = cv2.morphologyEx(thresholded_image, cv2.MORPH_OPEN, np.ones((grain_morphology, grain_morphology), dtype=int))
 
     thresholded_image_3chan = cv2.cvtColor(thresholded_image, cv2.COLOR_GRAY2BGR)
 
@@ -60,8 +60,9 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     # Create a binary image that marks the borders (where markers == -1)
     border_mask = np.where(markers == -1, 255, 0).astype(np.uint8)
 
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))  # You can change the size as needed
-    dilated_border_mask = cv2.dilate(border_mask, kernel, iterations=2)  # You can change the number of iterations as needed
+    # Border Thickness
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    dilated_border_mask = cv2.dilate(border_mask, kernel, iterations=2)
 
     # Create a grayscale image where the separated grains have their marker values (with the labels gradient) and everything else is white
     separated_grains_image = np.where(markers > 1, markers, 255).astype(np.uint8)
@@ -70,7 +71,6 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     separated_grains_image = cv2.normalize(separated_grains_image, None, 0, 255, cv2.NORM_MINMAX)
 
     # Apply the mask to the result image
-    # result = cv2.bitwise_or(separated_grains_image, dilated_border_mask)
     result = np.where(dilated_border_mask == 255, dilated_border_mask, separated_grains_image)
     result = 255 - result
 
@@ -160,7 +160,8 @@ def run_grain_counting():
                                                  config_watershedAll.uncertain_grain_area_max.get(),
                                                  config_watershedAll.bottom_crop_ratio.get(),
                                                  config_watershedAll.kernel_size.get(),
-                                                 config_watershedAll.distanceTransform_threshold.get())
+                                                 config_watershedAll.distanceTransform_threshold.get(),
+                                                 config_watershedAll.grain_morphology.get())
 
     if grayscale_image_cv is not None and outlined_image_cv is not None:
 
@@ -208,7 +209,7 @@ def select_file():
 def reset_values():
     config_watershedAll.scale_factor.set(1.0)
     config_watershedAll.scale_bar_pixels_per_mm.set(255.9812)
-    config_watershedAll.grayscale_threshold.set(190)
+    config_watershedAll.grayscale_threshold.set(170)
     config_watershedAll.bottom_crop_ratio.set(0.05)
     config_watershedAll.smaller_grain_area_min.set(9000)
     config_watershedAll.smaller_grain_area_max.set(50000)
@@ -218,3 +219,4 @@ def reset_values():
     config_watershedAll.uncertain_grain_area_max.set(400000)
     config_watershedAll.kernel_size.set(15)
     config_watershedAll.distanceTransform_threshold.set(70)
+    config_watershedAll.grain_morphology.set(3)
