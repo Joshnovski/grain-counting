@@ -25,9 +25,9 @@ def init_variables(root):
     distanceTransform_threshold = tk.IntVar(value=70)
     grain_morphology = tk.IntVar(value=3)
 
-    smaller_grain_area_min = tk.IntVar(value=9000)
+    smaller_grain_area_min = tk.IntVar(value=20000)
     smaller_grain_area_max = tk.IntVar(value=50000)
     larger_grain_area_min = tk.IntVar(value=50000)
-    larger_grain_area_max = tk.IntVar(value=100000)
-    uncertain_grain_area_min = tk.IntVar(value=100000)
+    larger_grain_area_max = tk.IntVar(value=90000)
+    uncertain_grain_area_min = tk.IntVar(value=90000)
     uncertain_grain_area_max = tk.IntVar(value=400000)
