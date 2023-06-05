@@ -5,9 +5,6 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Cursor
 import config
 from tkinter import filedialog
-from scipy import ndimage as ndi
-from skimage.feature import peak_local_max
-from skimage.segmentation import watershed
 
 
 def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_threshold, smaller_grain_area_min,
@@ -209,7 +206,7 @@ def apply_mask_and_blur(image, contours, kernel_size, uncertain_grayscale_thresh
     # Now we apply the watershed algorithm to the masked image
     # Distance transformation
     distance_transform = cv2.distanceTransform(blurred_image, cv2.DIST_L2, 5)
-    _, sure_foreground = cv2.threshold(distance_transform, 0.15 * distance_transform.max(), 255, 0)
+    _, sure_foreground = cv2.threshold(distance_transform, uncertain_grayscale_threshold * distance_transform.max(), 255, 0)
     sure_foreground = np.uint8(sure_foreground)
 
     # Create a kernel for dilation
