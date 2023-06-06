@@ -20,7 +20,7 @@ def init_GUI_variables():
     global uncertain_grain_area_min
     global uncertain_grain_area_max
     global kernel_size
-    global uncertain_grayscale_threshold
+    global distance_threshold
 
     scale_factor = config.scale_factor.get()
     scale_bar_pixels_per_mm = config.scale_bar_pixels_per_mm.get()
@@ -33,7 +33,7 @@ def init_GUI_variables():
     uncertain_grain_area_min = config.uncertain_grain_area_min.get()
     uncertain_grain_area_max = config.uncertain_grain_area_max.get()
     kernel_size = config.kernel_size.get()
-    uncertain_grayscale_threshold = config.uncertain_grayscale_threshold.get()
+    distance_threshold = config.distance_threshold.get()
     return
 
 
@@ -44,6 +44,9 @@ def select_file():
                                             filetypes=(("tiff files", "*.tiff"), ("all files", "*.*")))
     # Ensure file as been chosen;
     if not image_path:
+        print("No file selected!")
+        return
+    if image_path is None:
         print("No file selected!")
         return
 
@@ -225,7 +228,7 @@ def reset_values():
     config.uncertain_grain_area_min.set(100000)
     config.uncertain_grain_area_max.set(400000)
     config.kernel_size.set(5)
-    config.uncertain_grayscale_threshold.set(200)
+    config.distance_threshold.set(70)
 
 
 # Takes the tresholded image and the uncertain contour values
@@ -245,25 +248,16 @@ def apply_mask_and_blur(image, contours):
 
     # # Apply the blur to the masked image
     blurred_image = cv2.GaussianBlur(masked_image, (kernel_size, kernel_size), 0)
-    # blurred_image_3chan = cv2.cvtColor(blurred_image, cv2.COLOR_GRAY2BGR)
 
     _, thresholded_image = cv2.threshold(blurred_image, 170, 255, cv2.THRESH_BINARY)
     thresholded_image = cv2.morphologyEx(thresholded_image, cv2.MORPH_OPEN, np.ones((3, 3), dtype=int))
     thresholded_image_3chan = cv2.cvtColor(thresholded_image, cv2.COLOR_GRAY2BGR)
 
-    # Now we apply the watershed algorithm to the masked image
     # Distance transformation
     dt = cv2.distanceTransform(blurred_image, cv2.DIST_L2, 3)
     dt = ((dt - dt.min()) / (dt.max() - dt.min()) * 255).astype(np.uint8)
-    _, dt = cv2.threshold(dt, 70, 255, cv2.THRESH_BINARY)
+    _, dt = cv2.threshold(dt, distance_threshold, 255, cv2.THRESH_BINARY) # only areas where the distance is more than 70 are white, and the rest is black.
 
-    # _, sure_foreground = cv2.threshold(distance_transform, uncertain_grayscale_threshold * distance_transform.max(), 255, 0)
-    # sure_foreground = np.uint8(sure_foreground)
-
-    # Create a kernel for dilation
-    # kernel = np.ones((1, 1), np.uint8)
-    # sure_background = cv2.dilate(blurred_image, kernel, iterations=1)
-    # uncertain_region = cv2.subtract(sure_background, sure_foreground)
     border = cv2.dilate(thresholded_image, None, iterations=5)
     border = border - cv2.erode(border, None)
 
@@ -274,16 +268,8 @@ def apply_mask_and_blur(image, contours):
     markers[border == 255] = 255
     markers = markers.astype(np.int32)
 
-    # _, markers = cv2.connectedComponents(sure_foreground)
-    # markers = markers + 1
-    # markers[uncertain_region == 255] = 0
-    # markers = markers.astype(np.int32)
-
     # The watershed algorithm modifies the markers image
     cv2.watershed(thresholded_image_3chan, markers)
-
-    # Create a new binary image where the separated grains are white and everything else is black
-    # separated_grains_image = np.where(markers > 1, 255, 0).astype(np.uint8)
 
     # Create a binary image that marks the borders (where markers == -1)
     border_mask = np.where(markers == -1, 255, 0).astype(np.uint8)
