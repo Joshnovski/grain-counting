@@ -227,7 +227,7 @@ def reset_values():
     config.larger_grain_area_max.set(100000)
     config.uncertain_grain_area_min.set(100000)
     config.uncertain_grain_area_max.set(400000)
-    config.kernel_size.set(5)
+    config.kernel_size.set(3)
     config.distance_threshold.set(70)
 
 

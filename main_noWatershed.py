@@ -22,7 +22,7 @@ tk.Entry(root, textvariable=config.bottom_crop_ratio).grid(row=3, column=2)
 
 tk.Label(root, text="------------------------").grid(row=4, column=0, sticky='E')
 
-tk.Label(root, text="Edge Kernel Size:").grid(row=5, column=0, sticky='E')
+tk.Label(root, text="Kernel Size:").grid(row=5, column=0, sticky='E')
 tk.Entry(root, textvariable=config.kernel_size).grid(row=5, column=2)
 
 tk.Label(root, text="Distance Threshold:").grid(row=6, column=0, sticky='E')
