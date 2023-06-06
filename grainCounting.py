@@ -245,34 +245,67 @@ def apply_mask_and_blur(image, contours):
 
     # # Apply the blur to the masked image
     blurred_image = cv2.GaussianBlur(masked_image, (kernel_size, kernel_size), 0)
-    blurred_image_3chan = cv2.cvtColor(blurred_image, cv2.COLOR_GRAY2BGR)
+    # blurred_image_3chan = cv2.cvtColor(blurred_image, cv2.COLOR_GRAY2BGR)
+
+    _, thresholded_image = cv2.threshold(blurred_image, 170, 255, cv2.THRESH_BINARY)
+    thresholded_image = cv2.morphologyEx(thresholded_image, cv2.MORPH_OPEN, np.ones((3, 3), dtype=int))
+    thresholded_image_3chan = cv2.cvtColor(thresholded_image, cv2.COLOR_GRAY2BGR)
 
     # Now we apply the watershed algorithm to the masked image
     # Distance transformation
-    distance_transform = cv2.distanceTransform(blurred_image, cv2.DIST_L2, 5)
-    _, sure_foreground = cv2.threshold(distance_transform, uncertain_grayscale_threshold * distance_transform.max(), 255, 0)
-    sure_foreground = np.uint8(sure_foreground)
+    dt = cv2.distanceTransform(blurred_image, cv2.DIST_L2, 3)
+    dt = ((dt - dt.min()) / (dt.max() - dt.min()) * 255).astype(np.uint8)
+    _, dt = cv2.threshold(dt, 70, 255, cv2.THRESH_BINARY)
+
+    # _, sure_foreground = cv2.threshold(distance_transform, uncertain_grayscale_threshold * distance_transform.max(), 255, 0)
+    # sure_foreground = np.uint8(sure_foreground)
 
     # Create a kernel for dilation
-    kernel = np.ones((1, 1), np.uint8)
-    sure_background = cv2.dilate(blurred_image, kernel, iterations=1)
-    uncertain_region = cv2.subtract(sure_background, sure_foreground)
+    # kernel = np.ones((1, 1), np.uint8)
+    # sure_background = cv2.dilate(blurred_image, kernel, iterations=1)
+    # uncertain_region = cv2.subtract(sure_background, sure_foreground)
+    border = cv2.dilate(thresholded_image, None, iterations=5)
+    border = border - cv2.erode(border, None)
 
-    _, markers = cv2.connectedComponents(sure_foreground)
-    markers = markers + 1
-    markers[uncertain_region == 255] = 0
+    dt = dt.astype(np.uint8)
+    _, markers = cv2.connectedComponents(dt)
+
+    # Completing the markers now.
+    markers[border == 255] = 255
     markers = markers.astype(np.int32)
 
+    # _, markers = cv2.connectedComponents(sure_foreground)
+    # markers = markers + 1
+    # markers[uncertain_region == 255] = 0
+    # markers = markers.astype(np.int32)
+
     # The watershed algorithm modifies the markers image
-    cv2.watershed(blurred_image_3chan, markers)
+    cv2.watershed(thresholded_image_3chan, markers)
 
     # Create a new binary image where the separated grains are white and everything else is black
-    separated_grains_image = np.where(markers > 1, 255, 0).astype(np.uint8)
+    # separated_grains_image = np.where(markers > 1, 255, 0).astype(np.uint8)
+
+    # Create a binary image that marks the borders (where markers == -1)
+    border_mask = np.where(markers == -1, 255, 0).astype(np.uint8)
+
+    # Border Thickness
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    dilated_border_mask = cv2.dilate(border_mask, kernel, iterations=2)
+
+    # Create a grayscale image where the separated grains have their marker values (with the labels gradient) and everything else is white
+    separated_grains_image = np.where(markers > 1, markers, 255).astype(np.uint8)
+
+    # Normalize the separated_grains_image to have a full range of grayscale values
+    separated_grains_image = cv2.normalize(separated_grains_image, None, 0, 255, cv2.NORM_MINMAX)
+
+    # Apply the mask to the result image
+    result = np.where(dilated_border_mask == 255, dilated_border_mask, separated_grains_image)
+    result = 255 - result
 
     # Combine the blurred part with the original image
     inv_mask = cv2.bitwise_not(mask)
     image_bg = cv2.bitwise_and(image, image, mask=inv_mask)
-    combined_image = cv2.bitwise_or(image_bg, separated_grains_image)
+    combined_image = cv2.bitwise_or(image_bg, result)
 
     return combined_image
 
