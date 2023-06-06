@@ -7,6 +7,7 @@ import config
 from tkinter import filedialog
 
 
+# Initialise input variables
 def init_GUI_variables():
     global scale_factor
     global scale_bar_pixels_per_mm
@@ -36,6 +37,7 @@ def init_GUI_variables():
     return
 
 
+# Takes files from button selection in GUI and stores as variable image_path
 def select_file():
     global image_path
     image_path = filedialog.askopenfilename(initialdir="/", title="Select file",
@@ -46,6 +48,10 @@ def select_file():
         return
 
 
+# Crops bottom of image to prevent contouring of words
+# Modifies input resize factor if required
+# Converts Image to grayscale
+# Thresholds the grayscale image based on an input value
 def load_and_preprocessing():
 
     # Load the image
@@ -73,6 +79,10 @@ def load_and_preprocessing():
     return thresholded_image, image
 
 
+# Identifies contours based on the thresholded image
+# For a specified large surface area range, uncertain grain contours are identified and stored
+# A blur mask is applied to only these grains to minimise noise to help with grain separation
+# Contours for the recombined image are recorded
 def detect_contours(thresholded_image):
 
     # Find contours in the thresholded image
@@ -89,6 +99,12 @@ def detect_contours(thresholded_image):
     return contours, blurred_image
 
 
+# Initialises arrays and area values
+# For each contour the area is recorded
+# The contours a filtered based on their area value
+# The average area for each area range is calculated
+# The average area is converted to mm^2 based on the scale bar
+# The contours are assigned a color based on the area range and are drawn on a copy of the image
 def classify_and_calculate_contours(contours, image):
 
     # Initialise contours and contour areas
@@ -99,7 +115,7 @@ def classify_and_calculate_contours(contours, image):
     larger_grain_total_area = 0
     smaller_grain_total_area = 0
 
-    # Filter contours based on size and shape - first pass
+    # Filter contours based on size and shape
     for contour in contours:
         uncertain_grain_area = cv2.contourArea(contour)
         larger_grain_area = cv2.contourArea(contour)
@@ -139,6 +155,9 @@ def classify_and_calculate_contours(contours, image):
     return result_image, smaller_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_contours, larger_grain_contours, uncertain_grain_contours
 
 
+# Runs all the required functions to initialise and store values in required variables
+# Checks that the image processing was successful and returned an image
+# Prints the number of grains that fall into a given area range and prints the average area for those contours
 def run_grain_counting():
     init_GUI_variables()
     thresholded_image, image = load_and_preprocessing()
@@ -175,6 +194,7 @@ def run_grain_counting():
         sys.exit()
 
 
+# Takes the grayscale and contoured image and displays the two plots
 def display_images(grayscale_image_cv, outlined_image_cv):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
 
@@ -192,6 +212,7 @@ def display_images(grayscale_image_cv, outlined_image_cv):
     plt.show()
 
 
+# Sets the input fields back to original settings
 def reset_values():
     config.scale_factor.set(1.0)
     config.scale_bar_pixels_per_mm.set(255.9812)
@@ -207,6 +228,11 @@ def reset_values():
     config.uncertain_grayscale_threshold.set(200)
 
 
+# Takes the tresholded image and the uncertain contour values
+# Creates an empty black mask over the uncertain contour region then fills in the mask with white
+# Applies the mask over the uncertain grains in the image
+# Applies a gaussian blur the masked region only
+# Applies the watershed algorithm to the masked image
 def apply_mask_and_blur(image, contours):
     # Create an empty mask to start with
     mask = np.zeros(image.shape[:2], dtype=np.uint8)  # Ensuring mask size and shape
@@ -243,14 +269,9 @@ def apply_mask_and_blur(image, contours):
     # Create a new binary image where the separated grains are white and everything else is black
     separated_grains_image = np.where(markers > 1, 255, 0).astype(np.uint8)
 
-    # # Adjust the contrast of the blurred image using thresholding
-    # _, adjusted_image = cv2.threshold(blurred_image, uncertain_grayscale_threshold, 255, cv2.THRESH_BINARY)
-
     # Combine the blurred part with the original image
     inv_mask = cv2.bitwise_not(mask)
     image_bg = cv2.bitwise_and(image, image, mask=inv_mask)
-    # combined_image = cv2.bitwise_or(image_bg, adjusted_image)
-    # Combine the separated grains image with the original image
     combined_image = cv2.bitwise_or(image_bg, separated_grains_image)
 
     return combined_image
