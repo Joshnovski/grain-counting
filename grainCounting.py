@@ -7,9 +7,47 @@ import config
 from tkinter import filedialog
 
 
-def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_threshold, smaller_grain_area_min,
-                 smaller_grain_area_max, larger_grain_area_min, larger_grain_area_max, uncertain_grain_area_min,
-                 uncertain_grain_area_max, bottom_crop_ratio, kernel_size, uncertain_grayscale_threshold):
+def init_GUI_variables():
+    global scale_factor
+    global scale_bar_pixels_per_mm
+    global grayscale_threshold
+    global bottom_crop_ratio
+    global smaller_grain_area_min
+    global smaller_grain_area_max
+    global larger_grain_area_min
+    global larger_grain_area_max
+    global uncertain_grain_area_min
+    global uncertain_grain_area_max
+    global kernel_size
+    global uncertain_grayscale_threshold
+
+    scale_factor = config.scale_factor.get()
+    scale_bar_pixels_per_mm = config.scale_bar_pixels_per_mm.get()
+    grayscale_threshold = config.grayscale_threshold.get()
+    bottom_crop_ratio = config.bottom_crop_ratio.get()
+    smaller_grain_area_min = config.smaller_grain_area_min.get()
+    smaller_grain_area_max = config.smaller_grain_area_max.get()
+    larger_grain_area_min = config.larger_grain_area_min.get()
+    larger_grain_area_max = config.larger_grain_area_max.get()
+    uncertain_grain_area_min = config.uncertain_grain_area_min.get()
+    uncertain_grain_area_max = config.uncertain_grain_area_max.get()
+    kernel_size = config.kernel_size.get()
+    uncertain_grayscale_threshold = config.uncertain_grayscale_threshold.get()
+    return
+
+
+def select_file():
+    global image_path
+    image_path = filedialog.askopenfilename(initialdir="/", title="Select file",
+                                            filetypes=(("tiff files", "*.tiff"), ("all files", "*.*")))
+    # Ensure file as been chosen;
+    if not image_path:
+        print("No file selected!")
+        return
+
+
+def load_and_preprocessing():
+
     # Load the image
     image = cv2.imread(image_path)
 
@@ -29,22 +67,29 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     # Convert the image to grayscale
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-
     # Apply a threshold to the grayscale image
     _, thresholded_image = cv2.threshold(gray_image, grayscale_threshold, 255, cv2.THRESH_BINARY)
+
+    return thresholded_image, image
+
+
+def detect_contours(thresholded_image):
 
     # Find contours in the thresholded image
     contours, _ = cv2.findContours(thresholded_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Find uncertain grain contours to apply blur before contour drawing of the whole image
-    uncertain_grain_contours = [contour for contour in contours
-                                if uncertain_grain_area_min < cv2.contourArea(contour) < uncertain_grain_area_max]
+    uncertain_grain_contours = [contour for contour in contours if uncertain_grain_area_min < cv2.contourArea(contour) < uncertain_grain_area_max]
 
     # Apply blur to uncertain grain areas
-    blurred_image = apply_mask_and_blur(thresholded_image, uncertain_grain_contours, kernel_size, uncertain_grayscale_threshold)
+    blurred_image = apply_mask_and_blur(thresholded_image, uncertain_grain_contours)
 
     # Find contours in the new blurred_image
     contours, _ = cv2.findContours(blurred_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    return contours, blurred_image
+
+
+def classify_and_calculate_contours(contours, image):
 
     # Initialise contours and contour areas
     uncertain_grain_contours = []
@@ -74,8 +119,6 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
             smaller_grain_total_area += smaller_grain_area
 
     # Calculate average area in pixels
-    uncertain_grain_average_area_pixels = uncertain_grain_total_area / len(
-        larger_grain_contours) if larger_grain_contours else 0
     larger_grain_average_area_pixels = larger_grain_total_area / len(
         larger_grain_contours) if larger_grain_contours else 0
     smaller_grain_average_area_pixels = smaller_grain_total_area / len(
@@ -83,7 +126,6 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
 
     # Convert average area in pixels to average area in square millimeters
     pixel_size_mm = 1 / scale_bar_pixels_per_mm
-    uncertain_grain_average_area_mm = uncertain_grain_average_area_pixels * pixel_size_mm ** 2
     larger_grain_average_area_mm = larger_grain_average_area_pixels * pixel_size_mm ** 2
     smaller_grain_average_area_mm = smaller_grain_average_area_pixels * pixel_size_mm ** 2
 
@@ -94,9 +136,43 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     cv2.drawContours(result_image, smaller_grain_contours, -1, (255, 0, 0), 10)  # Blue. Thickness 10
 
     # Return the number of chocolate chips, the outlined image, the thresholded image and the average area
-    return len(larger_grain_contours), len(
-        smaller_grain_contours), len(
-        uncertain_grain_contours), result_image, blurred_image, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm
+    return result_image, smaller_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_contours, larger_grain_contours, uncertain_grain_contours
+
+
+def run_grain_counting():
+    init_GUI_variables()
+    thresholded_image, image = load_and_preprocessing()
+    contours, blurred_image = detect_contours(thresholded_image)
+    result_image, smaller_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_contours, larger_grain_contours, uncertain_grain_contours = classify_and_calculate_contours(contours, image)
+
+    if blurred_image is not None and result_image is not None:
+
+        print(f"-----------------------------------------------------------------------------------")
+        print(f"VISIBLE GRAIN COUNT...")
+        print(
+            f"The number of smaller {smaller_grain_area_min} to {smaller_grain_area_max} pixel Al grains visible: "
+            f"{len(smaller_grain_contours)}")
+        print(
+            f"The number of larger {larger_grain_area_min} to {larger_grain_area_max} pixel Al grains visible: "
+            f"{len(larger_grain_contours)}")
+        print(f"The total number of certain visible Al Grains: {len(smaller_grain_contours) + len(larger_grain_contours)}")
+        print(
+            f"The number of uncertain {uncertain_grain_area_min} to {uncertain_grain_area_max} pixel Al grains visible: "
+            f"{len(uncertain_grain_contours)}")
+        print(f"VISIBLE GRAIN AREA...")
+        print(
+            f"The average visible surface area of the smaller {smaller_grain_area_min} to {smaller_grain_area_max} "
+            f"pixel Al grains: {smaller_grain_average_area_mm:.4f} mm^2")
+        print(
+            f"The average visible surface area of the larger {larger_grain_area_min} to {larger_grain_area_max} "
+            f"pixel Al grains: {larger_grain_average_area_mm:.4f} mm^2")
+        print(f"-----------------------------------------------------------------------------------")
+
+        display_images(blurred_image, result_image)
+
+    else:
+        print("Error: Unable to process images.")
+        sys.exit()
 
 
 def display_images(grayscale_image_cv, outlined_image_cv):
@@ -116,64 +192,6 @@ def display_images(grayscale_image_cv, outlined_image_cv):
     plt.show()
 
 
-def run_grain_counting():
-    larger_grain_count, smaller_grain_count, uncertain_grain_count, outlined_image_cv, grayscale_image_cv, uncertain_real_average_area, larger_real_average_area, \
-        smaller_real_average_area = count_grains(image_path, config.scale_factor.get(),
-                                                 config.scale_bar_pixels_per_mm.get(),
-                                                 config.grayscale_threshold.get(),
-                                                 config.smaller_grain_area_min.get(),
-                                                 config.smaller_grain_area_max.get(),
-                                                 config.larger_grain_area_min.get(),
-                                                 config.larger_grain_area_max.get(),
-                                                 config.uncertain_grain_area_min.get(),
-                                                 config.uncertain_grain_area_max.get(),
-                                                 config.bottom_crop_ratio.get(),
-                                                 config.kernel_size.get(),
-                                                 config.uncertain_grayscale_threshold.get())
-
-    if grayscale_image_cv is not None and outlined_image_cv is not None:
-
-        print(f"-----------------------------------------------------------------------------------")
-        print(f"VISIBLE GRAIN COUNT...")
-        print(
-            f"The number of smaller {config.smaller_grain_area_min.get()} to {config.smaller_grain_area_max.get()} pixel Al grains visible: "
-            f"{smaller_grain_count}")
-        print(
-            f"The number of larger {config.larger_grain_area_min.get()} to {config.larger_grain_area_max.get()} pixel Al grains visible: "
-            f"{larger_grain_count}")
-        print(f"The total number of certain visible Al Grains: {smaller_grain_count + larger_grain_count}")
-        print(
-            f"The number of uncertain {config.uncertain_grain_area_min.get()} to {config.uncertain_grain_area_max.get()} pixel Al grains visible: "
-            f"{uncertain_grain_count}")
-        print(f"VISIBLE GRAIN AREA...")
-        print(
-            f"The average visible surface area of the smaller {config.smaller_grain_area_min.get()} to {config.smaller_grain_area_max.get()} "
-            f"pixel Al grains: {smaller_real_average_area:.4f} mm^2")
-        print(
-            f"The average visible surface area of the larger {config.larger_grain_area_min.get()} to {config.larger_grain_area_max.get()} "
-            f"pixel Al grains: {larger_real_average_area:.4f} mm^2")
-        # print(
-        #     f"The average visible surface area of the uncertain {config.uncertain_grain_area_min.get()} to {config.uncertain_grain_area_max.get()} "
-        #     f"pixel Al grains: {uncertain_real_average_area:.4f} mm^2")
-        print(f"-----------------------------------------------------------------------------------")
-
-        display_images(grayscale_image_cv, outlined_image_cv)
-
-    else:
-        print("Error: Unable to process images.")
-        sys.exit()
-
-
-def select_file():
-    global image_path
-    image_path = filedialog.askopenfilename(initialdir="/", title="Select file",
-                                            filetypes=(("tiff files", "*.tiff"), ("all files", "*.*")))
-    # Ensure file as been chosen;
-    if not image_path:
-        print("No file selected!")
-        return
-
-
 def reset_values():
     config.scale_factor.set(1.0)
     config.scale_bar_pixels_per_mm.set(255.9812)
@@ -189,7 +207,7 @@ def reset_values():
     config.uncertain_grayscale_threshold.set(200)
 
 
-def apply_mask_and_blur(image, contours, kernel_size, uncertain_grayscale_threshold):
+def apply_mask_and_blur(image, contours):
     # Create an empty mask to start with
     mask = np.zeros(image.shape[:2], dtype=np.uint8)  # Ensuring mask size and shape
 

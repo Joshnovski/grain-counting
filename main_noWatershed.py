@@ -5,7 +5,7 @@ import grainCounting
 root = tk.Tk()
 root.title("Grain Counting Parameters")
 
-config.init_variables(root)  # Initialize the tkinter variables
+config.init_variables(root)
 
 # Add all the entries for the parameters
 tk.Label(root, text="Scale Factor: ").grid(row=0, column=0, sticky='E')
