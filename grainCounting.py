@@ -21,6 +21,7 @@ def init_GUI_variables():
     global uncertain_grain_area_max
     global kernel_size
     global distance_threshold
+    global kernel_size_overall
 
     scale_factor = config.scale_factor.get()
     scale_bar_pixels_per_mm = config.scale_bar_pixels_per_mm.get()
@@ -33,6 +34,7 @@ def init_GUI_variables():
     uncertain_grain_area_min = config.uncertain_grain_area_min.get()
     uncertain_grain_area_max = config.uncertain_grain_area_max.get()
     kernel_size = config.kernel_size.get()
+    kernel_size_overall = config.kernel_size_overall.get()
     distance_threshold = config.distance_threshold.get()
     return
 
@@ -76,8 +78,11 @@ def load_and_preprocessing():
     # Convert the image to grayscale
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
+    # Adds overall blur to help remove noise
+    blurred_gray_image = cv2.GaussianBlur(gray_image, (kernel_size_overall, kernel_size_overall), 0)
+
     # Apply a threshold to the grayscale image
-    _, thresholded_image = cv2.threshold(gray_image, grayscale_threshold, 255, cv2.THRESH_BINARY)
+    _, thresholded_image = cv2.threshold(blurred_gray_image, grayscale_threshold, 255, cv2.THRESH_BINARY)
 
     return thresholded_image, image
 
@@ -177,7 +182,7 @@ def run_grain_counting():
         print(
             f"The number of larger {larger_grain_area_min} to {larger_grain_area_max} pixel Al grains visible: "
             f"{len(larger_grain_contours)}")
-        print(f"The total number of certain visible Al Grains: {len(smaller_grain_contours) + len(larger_grain_contours)}")
+        print(f"The total number of visible Al Grains: {len(smaller_grain_contours) + len(larger_grain_contours) + len(uncertain_grain_contours)}")
         print(
             f"The number of uncertain {uncertain_grain_area_min} to {uncertain_grain_area_max} pixel Al grains visible: "
             f"{len(uncertain_grain_contours)}")
@@ -188,6 +193,20 @@ def run_grain_counting():
         print(
             f"The average visible surface area of the larger {larger_grain_area_min} to {larger_grain_area_max} "
             f"pixel Al grains: {larger_grain_average_area_mm:.4f} mm^2")
+        print(f"-           -           -           -           -           -           -           -")
+        print(f'Scale Factor: {scale_factor}')
+        print(f'Scale Bar Pixels Per mm: {scale_bar_pixels_per_mm}')
+        print(f'Grayscale Threshold: {grayscale_threshold}')
+        print(f'Bottom Crop Ratio: {bottom_crop_ratio}')
+        print(f'Uncertain Kernel Size: {kernel_size}')
+        print(f'Kernel Size Overall: {kernel_size_overall}')
+        print(f'Distance Threshold: {distance_threshold}')
+        print(f'Smaller Grain Area Min: {smaller_grain_area_min}')
+        print(f'Smaller Grain Area Max: {smaller_grain_area_max}')
+        print(f'Larger Grain Area Min: {larger_grain_area_min}')
+        print(f'Larger Grain Area Max: {larger_grain_area_max}')
+        print(f'Uncertain Grain Area Min: {uncertain_grain_area_min}')
+        print(f'Uncertain Grain Area Max: {uncertain_grain_area_max}')
         print(f"-----------------------------------------------------------------------------------")
 
         display_images(blurred_image, result_image)
@@ -228,6 +247,7 @@ def reset_values():
     config.uncertain_grain_area_min.set(100000)
     config.uncertain_grain_area_max.set(400000)
     config.kernel_size.set(3)
+    config.kernel_size_overall.set(1)
     config.distance_threshold.set(70)
 
 
