@@ -87,7 +87,7 @@ def load_and_preprocessing():
     # Apply a threshold to the grayscale image
     _, thresholded_image = cv2.threshold(blurred_gray_image, grayscale_threshold, 255, cv2.THRESH_BINARY)
 
-    return thresholded_image, image, blurred_gray_image
+    return thresholded_image, image
 
 
 # Identifies contours based on the thresholded image
@@ -171,7 +171,7 @@ def classify_and_calculate_contours(contours, image):
 # Prints the number of grains that fall into a given area range and prints the average area for those contours
 def run_grain_counting():
     init_GUI_variables()
-    thresholded_image, image, blurred_gray_image = load_and_preprocessing()
+    thresholded_image, image = load_and_preprocessing()
     contours, blurred_image = detect_contours(thresholded_image)
     result_image, smaller_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_contours, larger_grain_contours, uncertain_grain_contours = classify_and_calculate_contours(contours, image)
 
@@ -212,7 +212,7 @@ def run_grain_counting():
         print(f'Uncertain Grain Area Max: {uncertain_grain_area_max}')
         print(f"-----------------------------------------------------------------------------------")
 
-        display_images(blurred_gray_image, result_image)
+        display_images(blurred_image, result_image)
 
     else:
         print("Error: Unable to process images.")
