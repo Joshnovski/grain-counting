@@ -78,13 +78,16 @@ def load_and_preprocessing():
     # Convert the image to grayscale
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
+    # Equalize the histogram of the grayscale image
+    gray_image = cv2.equalizeHist(gray_image)
+
     # Adds overall blur to help remove noise
     blurred_gray_image = cv2.GaussianBlur(gray_image, (kernel_size_overall, kernel_size_overall), 0)
 
     # Apply a threshold to the grayscale image
     _, thresholded_image = cv2.threshold(blurred_gray_image, grayscale_threshold, 255, cv2.THRESH_BINARY)
 
-    return thresholded_image, image
+    return thresholded_image, image, blurred_gray_image
 
 
 # Identifies contours based on the thresholded image
@@ -95,8 +98,8 @@ def detect_contours(thresholded_image):
 
     # Find contours in the thresholded image
     contours, _ = cv2.findContours(thresholded_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
     # Find uncertain grain contours to apply blur before contour drawing of the whole image
+
     uncertain_grain_contours = [contour for contour in contours if uncertain_grain_area_min < cv2.contourArea(contour) < uncertain_grain_area_max]
 
     # Apply blur to uncertain grain areas
@@ -168,7 +171,7 @@ def classify_and_calculate_contours(contours, image):
 # Prints the number of grains that fall into a given area range and prints the average area for those contours
 def run_grain_counting():
     init_GUI_variables()
-    thresholded_image, image = load_and_preprocessing()
+    thresholded_image, image, blurred_gray_image = load_and_preprocessing()
     contours, blurred_image = detect_contours(thresholded_image)
     result_image, smaller_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_contours, larger_grain_contours, uncertain_grain_contours = classify_and_calculate_contours(contours, image)
 
@@ -209,7 +212,7 @@ def run_grain_counting():
         print(f'Uncertain Grain Area Max: {uncertain_grain_area_max}')
         print(f"-----------------------------------------------------------------------------------")
 
-        display_images(blurred_image, result_image)
+        display_images(blurred_gray_image, result_image)
 
     else:
         print("Error: Unable to process images.")
