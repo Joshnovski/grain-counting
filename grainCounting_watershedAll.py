@@ -9,7 +9,7 @@ from tkinter import filedialog
 
 def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_threshold, smaller_grain_area_min,
                  smaller_grain_area_max, larger_grain_area_min, larger_grain_area_max, uncertain_grain_area_min,
-                 uncertain_grain_area_max, bottom_crop_ratio, kernel_size, distanceTransform_threshold, grain_morphology):
+                 uncertain_grain_area_max, bottom_crop_ratio, kernel_size, distanceTransform_threshold, grain_morphology, equalize_hist=False):
     # Load the image
     image = cv2.imread(image_path)
 
@@ -28,6 +28,10 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
 
     # Convert the image to grayscale
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Equalize the histogram of the grayscale image
+    if equalize_hist:
+        gray_image = cv2.equalizeHist(gray_image)
 
     # Smooth out noise with slight blur to assist with thresholding
     gray_image_blurred = cv2.GaussianBlur(gray_image, (kernel_size, kernel_size), 0)
@@ -127,7 +131,7 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     # Return the number of chocolate chips, the outlined image, the thresholded image and the average area
     return len(larger_grain_contours), len(
         smaller_grain_contours), len(
-        uncertain_grain_contours), result_image, result, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm
+        uncertain_grain_contours), result_image, gray_image, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm
 
 
 def display_images(grayscale_image_cv, outlined_image_cv):
@@ -161,7 +165,8 @@ def run_grain_counting():
                                                  config_watershedAll.bottom_crop_ratio.get(),
                                                  config_watershedAll.kernel_size.get(),
                                                  config_watershedAll.distanceTransform_threshold.get(),
-                                                 config_watershedAll.grain_morphology.get())
+                                                 config_watershedAll.grain_morphology.get(),
+                                                 config_watershedAll.equalize_hist.get())
 
     if grayscale_image_cv is not None and outlined_image_cv is not None:
 
@@ -211,7 +216,7 @@ def reset_values():
     config_watershedAll.scale_bar_pixels_per_mm.set(255.9812)
     config_watershedAll.grayscale_threshold.set(170)
     config_watershedAll.bottom_crop_ratio.set(0.05)
-    config_watershedAll.smaller_grain_area_min.set(20000)
+    config_watershedAll.smaller_grain_area_min.set(10000)
     config_watershedAll.smaller_grain_area_max.set(50000)
     config_watershedAll.larger_grain_area_min.set(50000)
     config_watershedAll.larger_grain_area_max.set(90000)
