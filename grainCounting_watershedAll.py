@@ -131,7 +131,7 @@ def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_th
     # Return the number of chocolate chips, the outlined image, the thresholded image and the average area
     return len(larger_grain_contours), len(
         smaller_grain_contours), len(
-        uncertain_grain_contours), result_image, gray_image, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm
+        uncertain_grain_contours), result_image, result, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm
 
 
 def display_images(grayscale_image_cv, outlined_image_cv):
@@ -178,10 +178,10 @@ def run_grain_counting():
         print(
             f"The number of larger {config_watershedAll.larger_grain_area_min.get()} to {config_watershedAll.larger_grain_area_max.get()} pixel Al grains visible: "
             f"{larger_grain_count}")
-        print(f"The total number of certain visible Al Grains: {smaller_grain_count + larger_grain_count}")
         print(
             f"The number of uncertain {config_watershedAll.uncertain_grain_area_min.get()} to {config_watershedAll.uncertain_grain_area_max.get()} pixel Al grains visible: "
             f"{uncertain_grain_count}")
+        print(f"The total number of certain visible Al Grains: {smaller_grain_count + larger_grain_count + uncertain_grain_count}")
         print(f"VISIBLE GRAIN AREA...")
         print(
             f"The average visible surface area of the smaller {config_watershedAll.smaller_grain_area_min.get()} to {config_watershedAll.smaller_grain_area_max.get()} "
@@ -189,9 +189,6 @@ def run_grain_counting():
         print(
             f"The average visible surface area of the larger {config_watershedAll.larger_grain_area_min.get()} to {config_watershedAll.larger_grain_area_max.get()} "
             f"pixel Al grains: {larger_real_average_area:.4f} mm^2")
-        # print(
-        #     f"The average visible surface area of the uncertain {config_watershedAll.uncertain_grain_area_min.get()} to {config_watershedAll.uncertain_grain_area_max.get()} "
-        #     f"pixel Al grains: {uncertain_real_average_area:.4f} mm^2")
         print(f"-----------------------------------------------------------------------------------")
 
         display_images(grayscale_image_cv, outlined_image_cv)
