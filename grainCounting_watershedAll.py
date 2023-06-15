@@ -189,6 +189,21 @@ def run_grain_counting():
         print(
             f"The average visible surface area of the larger {config_watershedAll.larger_grain_area_min.get()} to {config_watershedAll.larger_grain_area_max.get()} "
             f"pixel Al grains: {larger_real_average_area:.4f} mm^2")
+        print(f"-           -           -           -           -           -           -           -")
+        print(f'Scale Factor: {config_watershedAll.scale_factor.get()}')
+        print(f'Scale Bar Pixels Per mm: {config_watershedAll.scale_bar_pixels_per_mm.get()}')
+        print(f'Grayscale Threshold: {config_watershedAll.grayscale_threshold.get()}')
+        print(f'Bottom Crop Ratio: {config_watershedAll.bottom_crop_ratio.get()}')
+        print(f'Equalize Histogram: {config_watershedAll.equalize_hist.get()}')
+        print(f'Kernel Size: {config_watershedAll.kernel_size.get()}')
+        print(f'Distance Threshold: {config_watershedAll.distanceTransform_threshold.get()}')
+        print(f'Grain Morphology Simplicity: {config_watershedAll.grain_morphology.get()}')
+        print(f'Smaller Grain Area Min: {config_watershedAll.smaller_grain_area_min.get()}')
+        print(f'Smaller Grain Area Max: {config_watershedAll.smaller_grain_area_max.get()}')
+        print(f'Larger Grain Area Min: {config_watershedAll.larger_grain_area_min.get()}')
+        print(f'Larger Grain Area Max: {config_watershedAll.larger_grain_area_max.get()}')
+        print(f'Uncertain Grain Area Min: {config_watershedAll.uncertain_grain_area_min.get()}')
+        print(f'Uncertain Grain Area Max: {config_watershedAll.uncertain_grain_area_max.get()}')
         print(f"-----------------------------------------------------------------------------------")
 
         display_images(grayscale_image_cv, outlined_image_cv)
