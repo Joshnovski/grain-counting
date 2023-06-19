@@ -7,9 +7,41 @@ import config_watershedAll
 from tkinter import filedialog
 
 
-def count_grains(image_path, scale_factor, scale_bar_pixels_per_mm, grayscale_threshold, smaller_grain_area_min,
-                 smaller_grain_area_max, larger_grain_area_min, larger_grain_area_max, uncertain_grain_area_min,
-                 uncertain_grain_area_max, bottom_crop_ratio, kernel_size, distanceTransform_threshold, grain_morphology, equalize_hist=False):
+def init_GUI_variables():
+    global equalize_hist
+    global scale_factor
+    global scale_bar_pixels_per_mm
+    global grayscale_threshold
+    global bottom_crop_ratio
+    global smaller_grain_area_min
+    global smaller_grain_area_max
+    global larger_grain_area_min
+    global larger_grain_area_max
+    global uncertain_grain_area_min
+    global uncertain_grain_area_max
+    global kernel_size
+    global distanceTransform_threshold
+    global grain_morphology
+
+    equalize_hist = config_watershedAll.equalize_hist.get()
+    scale_factor = config_watershedAll.scale_factor.get()
+    scale_bar_pixels_per_mm = config_watershedAll.scale_bar_pixels_per_mm.get()
+    grayscale_threshold = config_watershedAll.grayscale_threshold.get()
+    bottom_crop_ratio = config_watershedAll.bottom_crop_ratio.get()
+    smaller_grain_area_min = config_watershedAll.smaller_grain_area_min.get()
+    smaller_grain_area_max = config_watershedAll.smaller_grain_area_max.get()
+    larger_grain_area_min = config_watershedAll.larger_grain_area_min.get()
+    larger_grain_area_max = config_watershedAll.larger_grain_area_max.get()
+    uncertain_grain_area_min = config_watershedAll.uncertain_grain_area_min.get()
+    uncertain_grain_area_max = config_watershedAll.uncertain_grain_area_max.get()
+    kernel_size = config_watershedAll.kernel_size.get()
+    distanceTransform_threshold = config_watershedAll.distanceTransform_threshold.get()
+    grain_morphology = config_watershedAll.grain_morphology.get()
+    return
+
+
+def count_grains(image_path):
+
     # Load the image
     image = cv2.imread(image_path)
 
@@ -152,25 +184,16 @@ def display_images(grayscale_image_cv, outlined_image_cv):
 
 
 def run_grain_counting():
+    init_GUI_variables()
     larger_grain_count, smaller_grain_count, uncertain_grain_count, outlined_image_cv, grayscale_image_cv, uncertain_real_average_area, larger_real_average_area, \
-        smaller_real_average_area = count_grains(image_path, config_watershedAll.scale_factor.get(),
-                                                 config_watershedAll.scale_bar_pixels_per_mm.get(),
-                                                 config_watershedAll.grayscale_threshold.get(),
-                                                 config_watershedAll.smaller_grain_area_min.get(),
-                                                 config_watershedAll.smaller_grain_area_max.get(),
-                                                 config_watershedAll.larger_grain_area_min.get(),
-                                                 config_watershedAll.larger_grain_area_max.get(),
-                                                 config_watershedAll.uncertain_grain_area_min.get(),
-                                                 config_watershedAll.uncertain_grain_area_max.get(),
-                                                 config_watershedAll.bottom_crop_ratio.get(),
-                                                 config_watershedAll.kernel_size.get(),
-                                                 config_watershedAll.distanceTransform_threshold.get(),
-                                                 config_watershedAll.grain_morphology.get(),
-                                                 config_watershedAll.equalize_hist.get())
+        smaller_real_average_area = count_grains(image_path)
 
     if grayscale_image_cv is not None and outlined_image_cv is not None:
 
         print(f"-----------------------------------------------------------------------------------")
+        print(f" ")
+        print(f"IMAGE PATH: {image_path}")
+        print(f" ")
         print(f"VISIBLE GRAIN COUNT...")
         print(
             f"The number of smaller {config_watershedAll.smaller_grain_area_min.get()} to {config_watershedAll.smaller_grain_area_max.get()} pixel Al grains visible: "
@@ -181,7 +204,8 @@ def run_grain_counting():
         print(
             f"The number of uncertain {config_watershedAll.uncertain_grain_area_min.get()} to {config_watershedAll.uncertain_grain_area_max.get()} pixel Al grains visible: "
             f"{uncertain_grain_count}")
-        print(f"The total number of certain visible Al Grains: {smaller_grain_count + larger_grain_count + uncertain_grain_count}")
+        print(f"The total number of visible Al Grains: {smaller_grain_count + larger_grain_count + uncertain_grain_count}")
+        print(f" ")
         print(f"VISIBLE GRAIN AREA...")
         print(
             f"The average visible surface area of the smaller {config_watershedAll.smaller_grain_area_min.get()} to {config_watershedAll.smaller_grain_area_max.get()} "
@@ -189,7 +213,8 @@ def run_grain_counting():
         print(
             f"The average visible surface area of the larger {config_watershedAll.larger_grain_area_min.get()} to {config_watershedAll.larger_grain_area_max.get()} "
             f"pixel Al grains: {larger_real_average_area:.4f} mm^2")
-        print(f"-           -           -           -           -           -           -           -")
+        print(f" ")
+        print(f"GRAIN COUNTING IMAGE PROCESSING PARAMETERS...")
         print(f'Scale Factor: {config_watershedAll.scale_factor.get()}')
         print(f'Scale Bar Pixels Per mm: {config_watershedAll.scale_bar_pixels_per_mm.get()}')
         print(f'Grayscale Threshold: {config_watershedAll.grayscale_threshold.get()}')
@@ -204,6 +229,7 @@ def run_grain_counting():
         print(f'Larger Grain Area Max: {config_watershedAll.larger_grain_area_max.get()}')
         print(f'Uncertain Grain Area Min: {config_watershedAll.uncertain_grain_area_min.get()}')
         print(f'Uncertain Grain Area Max: {config_watershedAll.uncertain_grain_area_max.get()}')
+        print(f" ")
         print(f"-----------------------------------------------------------------------------------")
 
         display_images(grayscale_image_cv, outlined_image_cv)
