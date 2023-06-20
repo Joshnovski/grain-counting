@@ -178,6 +178,9 @@ def run_grain_counting():
     if blurred_image is not None and result_image is not None:
 
         print(f"-----------------------------------------------------------------------------------")
+        print(f" ")
+        print(f"IMAGE PATH: {image_path}")
+        print(f" ")
         print(f"VISIBLE GRAIN COUNT...")
         print(
             f"The number of smaller {smaller_grain_area_min} to {smaller_grain_area_max} pixel Al grains visible: "
@@ -189,6 +192,7 @@ def run_grain_counting():
         print(
             f"The number of uncertain {uncertain_grain_area_min} to {uncertain_grain_area_max} pixel Al grains visible: "
             f"{len(uncertain_grain_contours)}")
+        print(f" ")
         print(f"VISIBLE GRAIN AREA...")
         print(
             f"The average visible surface area of the smaller {smaller_grain_area_min} to {smaller_grain_area_max} "
@@ -196,7 +200,8 @@ def run_grain_counting():
         print(
             f"The average visible surface area of the larger {larger_grain_area_min} to {larger_grain_area_max} "
             f"pixel Al grains: {larger_grain_average_area_mm:.4f} mm^2")
-        print(f"-           -           -           -           -           -           -           -")
+        print(f" ")
+        print(f"GRAIN COUNTING IMAGE PROCESSING PARAMETERS...")
         print(f'Scale Factor: {scale_factor}')
         print(f'Scale Bar Pixels Per mm: {scale_bar_pixels_per_mm}')
         print(f'Grayscale Threshold: {grayscale_threshold}')
@@ -210,6 +215,7 @@ def run_grain_counting():
         print(f'Larger Grain Area Max: {larger_grain_area_max}')
         print(f'Uncertain Grain Area Min: {uncertain_grain_area_min}')
         print(f'Uncertain Grain Area Max: {uncertain_grain_area_max}')
+        print(f" ")
         print(f"-----------------------------------------------------------------------------------")
 
         display_images(blurred_image, result_image)

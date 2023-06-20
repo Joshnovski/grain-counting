@@ -28,16 +28,16 @@ tk.Entry(frame, textvariable=config.bottom_crop_ratio, width=16).grid(row=2, col
 # tk.Label(root, text="------------------------").grid(row=4, column=0, sticky='W')
 
 tk.Label(frame2, text="Grayscale Threshold:").grid(row=3, column=0, sticky='W', padx=10, pady=4)
-tk.Entry(frame2, textvariable=config.grayscale_threshold).grid(row=3, column=2, padx=(35, 10))
+tk.Entry(frame2, textvariable=config.grayscale_threshold).grid(row=3, column=2, padx=(0, 10))
 
-tk.Label(frame2, text="Uncertain Grain Kernel Size:").grid(row=5, column=0, sticky='W', padx=10, pady=4)
-tk.Entry(frame2, textvariable=config.kernel_size).grid(row=5, column=2, padx=(35, 10))
+tk.Label(frame2, text="Uncertain Grain Kernel Size (Odd):").grid(row=5, column=0, sticky='W', padx=10, pady=4)
+tk.Entry(frame2, textvariable=config.kernel_size).grid(row=5, column=2, padx=(0, 10))
 
-tk.Label(frame2, text="Overall Grain Kernel Size:").grid(row=6, column=0, sticky='W', padx=10, pady=4)
-tk.Entry(frame2, textvariable=config.kernel_size_overall).grid(row=6, column=2, padx=(35, 10))
+tk.Label(frame2, text="Overall Grain Kernel Size (Odd):").grid(row=6, column=0, sticky='W', padx=10, pady=4)
+tk.Entry(frame2, textvariable=config.kernel_size_overall).grid(row=6, column=2, padx=(0, 10))
 
 tk.Label(frame2, text="Distance Threshold:").grid(row=7, column=0, sticky='W', padx=10, pady=4)
-tk.Entry(frame2, textvariable=config.distance_threshold).grid(row=7, column=2, padx=(35, 10))
+tk.Entry(frame2, textvariable=config.distance_threshold).grid(row=7, column=2, padx=(0, 10))
 
 # tk.Label(root, text="------------------------").grid(row=8, column=0, sticky='E')
 
@@ -75,13 +75,13 @@ root.grid_columnconfigure(0, weight=1, minsize=20)  # Add padding on left side
 root.grid_columnconfigure(3, weight=1, minsize=10)  # Add padding on right side
 
 # Add a button to re-run the grain counting
-tk.Button(frame, text="Run", command=grainCounting.run_grain_counting, width=12).grid(row=0, column=2, pady=2, padx=(20, 2), sticky='E')
+tk.Button(frame, text="Run", command=grainCounting.run_grain_counting, width=12).grid(row=0, column=2, pady=2, padx=(10, 2), sticky='E')
 
 # Add a button to reset the parameters to their default values
-tk.Button(frame, text="Reset Values", command=grainCounting.reset_values, width=12).grid(row=2, column=2, pady=2, padx=(20, 2), sticky='E')
+tk.Button(frame, text="Reset Values", command=grainCounting.reset_values, width=12).grid(row=2, column=2, pady=2, padx=(10, 2), sticky='E')
 
 # Add a button to select a file
-tk.Button(frame, text="Select File", command=grainCounting.select_file, width=12).grid(row=1, column=2, pady=2, padx=(20, 2), sticky='E')
+tk.Button(frame, text="Select File", command=grainCounting.select_file, width=12).grid(row=1, column=2, pady=2, padx=(10, 2), sticky='E')
 
 
 root.mainloop()
