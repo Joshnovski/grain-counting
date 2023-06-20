@@ -40,8 +40,17 @@ def init_GUI_variables():
     return
 
 
-def count_grains(image_path):
+def select_file():
+    global image_path
+    image_path = filedialog.askopenfilename(initialdir="/", title="Select file",
+                                            filetypes=(("tiff files", "*.tiff"), ("all files", "*.*")))
+    # Ensure file as been chosen;
+    if not image_path:
+        print("No file selected!")
+        return
 
+
+def load_and_preprocessing():
     # Load the image
     image = cv2.imread(image_path)
 
@@ -89,6 +98,10 @@ def count_grains(image_path):
     markers[border == 255] = 255
     markers = markers.astype(np.int32)
 
+    return thresholded_image_3chan, markers, image
+
+
+def watershed_and_postprocessing(thresholded_image_3chan, markers):
     # The watershed algorithm modifies the markers image
     cv2.watershed(thresholded_image_3chan, markers)
     # image[markers == -1] = [0, 0, 255]
@@ -109,6 +122,11 @@ def count_grains(image_path):
     # Apply the mask to the result image
     result = np.where(dilated_border_mask == 255, dilated_border_mask, separated_grains_image)
     result = 255 - result
+
+    return result
+
+
+def calculate_area_and_filter_contours(result):
 
     # Find contours in the new blurred_image
     contours, _ = cv2.findContours(result, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -154,16 +172,17 @@ def count_grains(image_path):
     larger_grain_average_area_mm = larger_grain_average_area_pixels * pixel_size_mm ** 2
     smaller_grain_average_area_mm = smaller_grain_average_area_pixels * pixel_size_mm ** 2
 
+    # Return the number of chocolate chips, the outlined image, the thresholded image and the average area
+    return larger_grain_contours, smaller_grain_contours, uncertain_grain_contours, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm
+
+
+def draw_contours(image, uncertain_grain_contours, larger_grain_contours, smaller_grain_contours):
     # Draw the grain contours on the image
     result_image = image.copy()
     cv2.drawContours(result_image, uncertain_grain_contours, -1, (0, 255, 0), 10)  # Red. Thickness 10
     cv2.drawContours(result_image, larger_grain_contours, -1, (0, 0, 255), 10)  # Red. Thickness 10
     cv2.drawContours(result_image, smaller_grain_contours, -1, (255, 0, 0), 10)  # Blue. Thickness 10
-
-    # Return the number of chocolate chips, the outlined image, the thresholded image and the average area
-    return len(larger_grain_contours), len(
-        smaller_grain_contours), len(
-        uncertain_grain_contours), result_image, result, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm
+    return result_image
 
 
 def display_images(grayscale_image_cv, outlined_image_cv):
@@ -185,10 +204,12 @@ def display_images(grayscale_image_cv, outlined_image_cv):
 
 def run_grain_counting():
     init_GUI_variables()
-    larger_grain_count, smaller_grain_count, uncertain_grain_count, outlined_image_cv, grayscale_image_cv, uncertain_real_average_area, larger_real_average_area, \
-        smaller_real_average_area = count_grains(image_path)
+    thresholded_image_3chan, markers, image = load_and_preprocessing()
+    result = watershed_and_postprocessing(thresholded_image_3chan, markers)
+    larger_grain_contours, smaller_grain_contours, uncertain_grain_contours, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm = calculate_area_and_filter_contours(result)
+    result_image = draw_contours(image, uncertain_grain_contours, larger_grain_contours, smaller_grain_contours)
 
-    if grayscale_image_cv is not None and outlined_image_cv is not None:
+    if result is not None and result_image is not None:
 
         print(f"-----------------------------------------------------------------------------------")
         print(f" ")
@@ -196,57 +217,47 @@ def run_grain_counting():
         print(f" ")
         print(f"VISIBLE GRAIN COUNT...")
         print(
-            f"The number of smaller {config_watershedAll.smaller_grain_area_min.get()} to {config_watershedAll.smaller_grain_area_max.get()} pixel Al grains visible: "
-            f"{smaller_grain_count}")
+            f"The number of smaller {smaller_grain_area_min} to {smaller_grain_area_max} pixel Al grains visible: "
+            f"{len(smaller_grain_contours)}")
         print(
-            f"The number of larger {config_watershedAll.larger_grain_area_min.get()} to {config_watershedAll.larger_grain_area_max.get()} pixel Al grains visible: "
-            f"{larger_grain_count}")
+            f"The number of larger {larger_grain_area_min} to {larger_grain_area_max} pixel Al grains visible: "
+            f"{len(larger_grain_contours)}")
         print(
-            f"The number of uncertain {config_watershedAll.uncertain_grain_area_min.get()} to {config_watershedAll.uncertain_grain_area_max.get()} pixel Al grains visible: "
-            f"{uncertain_grain_count}")
-        print(f"The total number of visible Al Grains: {smaller_grain_count + larger_grain_count + uncertain_grain_count}")
+            f"The number of uncertain {uncertain_grain_area_min} to {uncertain_grain_area_max} pixel Al grains visible: "
+            f"{len(uncertain_grain_contours)}")
+        print(f"The total number of visible Al Grains: {len(smaller_grain_contours) + len(larger_grain_contours) + len(uncertain_grain_contours)}")
         print(f" ")
         print(f"VISIBLE GRAIN AREA...")
         print(
-            f"The average visible surface area of the smaller {config_watershedAll.smaller_grain_area_min.get()} to {config_watershedAll.smaller_grain_area_max.get()} "
-            f"pixel Al grains: {smaller_real_average_area:.4f} mm^2")
+            f"The average visible surface area of the smaller {smaller_grain_area_min} to {smaller_grain_area_max} "
+            f"pixel Al grains: {smaller_grain_average_area_mm:.4f} mm^2")
         print(
-            f"The average visible surface area of the larger {config_watershedAll.larger_grain_area_min.get()} to {config_watershedAll.larger_grain_area_max.get()} "
-            f"pixel Al grains: {larger_real_average_area:.4f} mm^2")
+            f"The average visible surface area of the larger {larger_grain_area_min} to {larger_grain_area_max} "
+            f"pixel Al grains: {larger_grain_average_area_mm:.4f} mm^2")
         print(f" ")
         print(f"GRAIN COUNTING IMAGE PROCESSING PARAMETERS...")
-        print(f'Scale Factor: {config_watershedAll.scale_factor.get()}')
-        print(f'Scale Bar Pixels Per mm: {config_watershedAll.scale_bar_pixels_per_mm.get()}')
-        print(f'Grayscale Threshold: {config_watershedAll.grayscale_threshold.get()}')
-        print(f'Bottom Crop Ratio: {config_watershedAll.bottom_crop_ratio.get()}')
-        print(f'Equalize Histogram: {config_watershedAll.equalize_hist.get()}')
-        print(f'Kernel Size: {config_watershedAll.kernel_size.get()}')
-        print(f'Distance Threshold: {config_watershedAll.distanceTransform_threshold.get()}')
-        print(f'Grain Morphology Simplicity: {config_watershedAll.grain_morphology.get()}')
-        print(f'Smaller Grain Area Min: {config_watershedAll.smaller_grain_area_min.get()}')
-        print(f'Smaller Grain Area Max: {config_watershedAll.smaller_grain_area_max.get()}')
-        print(f'Larger Grain Area Min: {config_watershedAll.larger_grain_area_min.get()}')
-        print(f'Larger Grain Area Max: {config_watershedAll.larger_grain_area_max.get()}')
-        print(f'Uncertain Grain Area Min: {config_watershedAll.uncertain_grain_area_min.get()}')
-        print(f'Uncertain Grain Area Max: {config_watershedAll.uncertain_grain_area_max.get()}')
+        print(f'Scale Factor: {scale_factor}')
+        print(f'Scale Bar Pixels Per mm: {scale_bar_pixels_per_mm}')
+        print(f'Grayscale Threshold: {grayscale_threshold}')
+        print(f'Bottom Crop Ratio: {bottom_crop_ratio}')
+        print(f'Equalize Histogram: {equalize_hist}')
+        print(f'Kernel Size: {kernel_size}')
+        print(f'Distance Threshold: {distanceTransform_threshold}')
+        print(f'Grain Morphology Simplicity: {grain_morphology}')
+        print(f'Smaller Grain Area Min: {smaller_grain_area_min}')
+        print(f'Smaller Grain Area Max: {smaller_grain_area_max}')
+        print(f'Larger Grain Area Min: {larger_grain_area_min}')
+        print(f'Larger Grain Area Max: {larger_grain_area_max}')
+        print(f'Uncertain Grain Area Min: {uncertain_grain_area_min}')
+        print(f'Uncertain Grain Area Max: {uncertain_grain_area_max}')
         print(f" ")
         print(f"-----------------------------------------------------------------------------------")
 
-        display_images(grayscale_image_cv, outlined_image_cv)
+        display_images(result, result_image)
 
     else:
         print("Error: Unable to process images.")
         sys.exit()
-
-
-def select_file():
-    global image_path
-    image_path = filedialog.askopenfilename(initialdir="/", title="Select file",
-                                            filetypes=(("tiff files", "*.tiff"), ("all files", "*.*")))
-    # Ensure file as been chosen;
-    if not image_path:
-        print("No file selected!")
-        return
 
 
 def reset_values():
