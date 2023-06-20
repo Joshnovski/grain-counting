@@ -78,7 +78,7 @@ def load_and_preprocessing():
     gray_image_blurred = cv2.GaussianBlur(gray_image, (kernel_size, kernel_size), 0)
 
     # Apply a threshold to the grayscale image
-    _, thresholded_image = cv2.threshold(gray_image_blurred, grayscale_threshold, 255, cv2.THRESH_BINARY) #raise lower number to remove bits attatched to grains
+    _, thresholded_image = cv2.threshold(gray_image_blurred, grayscale_threshold, 255, cv2.THRESH_BINARY)
     thresholded_image = cv2.morphologyEx(thresholded_image, cv2.MORPH_OPEN, np.ones((grain_morphology, grain_morphology), dtype=int))
 
     thresholded_image_3chan = cv2.cvtColor(thresholded_image, cv2.COLOR_GRAY2BGR)
@@ -86,7 +86,7 @@ def load_and_preprocessing():
     # Distance transformation
     dt = cv2.distanceTransform(thresholded_image, cv2.DIST_L2, 3)
     dt = ((dt - dt.min()) / (dt.max() - dt.min()) * 255).astype(np.uint8)
-    _, dt = cv2.threshold(dt, distanceTransform_threshold, 255, cv2.THRESH_BINARY) # Lower the lower number to include more grains (too low and starts to add very small grains)
+    _, dt = cv2.threshold(dt, distanceTransform_threshold, 255, cv2.THRESH_BINARY)
 
     border = cv2.dilate(thresholded_image, None, iterations=5)
     border = border - cv2.erode(border, None)
@@ -113,7 +113,8 @@ def watershed_and_postprocessing(thresholded_image_3chan, markers):
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     dilated_border_mask = cv2.dilate(border_mask, kernel, iterations=2)
 
-    # Create a grayscale image where the separated grains have their marker values (with the labels gradient) and everything else is white
+    # Create a grayscale image where the separated grains have their marker values
+    # (with the labels gradient) and everything else is white
     separated_grains_image = np.where(markers > 1, markers, 255).astype(np.uint8)
 
     # Normalize the separated_grains_image to have a full range of grayscale values
