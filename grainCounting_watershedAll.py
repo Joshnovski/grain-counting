@@ -1,6 +1,7 @@
 import cv2
 import sys
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Cursor
 import config_watershedAll
@@ -248,12 +249,12 @@ def run_grain_counting():
         print(f'Kernel Size: {kernel_size}')
         print(f'Distance Threshold: {distanceTransform_threshold}')
         print(f'Grain Morphology Simplicity: {grain_morphology}')
-        print(f'Smaller Grain Area Min: {smaller_grain_area_min * pixel_size_mm} mm^2')
-        print(f'Smaller Grain Area Max: {smaller_grain_area_max * pixel_size_mm} mm^2')
-        print(f'Larger Grain Area Min: {larger_grain_area_min * pixel_size_mm} mm^2')
-        print(f'Larger Grain Area Max: {larger_grain_area_max * pixel_size_mm} mm^2')
-        print(f'Uncertain Grain Area Min: {uncertain_grain_area_min * pixel_size_mm} mm^2')
-        print(f'Uncertain Grain Area Max: {uncertain_grain_area_max * pixel_size_mm} mm^2')
+        print(f'Smaller Grain Area Min: {smaller_grain_area_min * pixel_size_mm} mm^2. Equivalent to a {math.sqrt(4*(smaller_grain_area_min*pixel_size_mm)/math.pi):.3f} mm diameter circle')
+        print(f'Smaller Grain Area Max: {smaller_grain_area_max * pixel_size_mm} mm^2. Equivalent to a {math.sqrt(4*(smaller_grain_area_max*pixel_size_mm)/math.pi):.3f} mm diameter circle')
+        print(f'Larger Grain Area Min: {larger_grain_area_min * pixel_size_mm} mm^2. Equivalent to a {math.sqrt(4*(larger_grain_area_min*pixel_size_mm)/math.pi):.3f} mm diameter circle')
+        print(f'Larger Grain Area Max: {larger_grain_area_max * pixel_size_mm} mm^2. Equivalent to a {math.sqrt(4*(larger_grain_area_max*pixel_size_mm)/math.pi):.3f} mm diameter circle')
+        print(f'Uncertain Grain Area Min: {uncertain_grain_area_min * pixel_size_mm} mm^2. Equivalent to a {math.sqrt(4*(uncertain_grain_area_min*pixel_size_mm)/math.pi):.3f} mm diameter circle')
+        print(f'Uncertain Grain Area Max: {uncertain_grain_area_max * pixel_size_mm} mm^2. Equivalent to a {math.sqrt(4*(uncertain_grain_area_max*pixel_size_mm)/math.pi):.3f} mm diameter circle')
         print(f" ")
         print(f"-----------------------------------------------------------------------------------")
 
