@@ -22,18 +22,20 @@ def init_GUI_variables():
     global kernel_size
     global distanceTransform_threshold
     global grain_morphology
+    global pixel_size_mm
 
     equalize_hist = config_watershedAll.equalize_hist.get()
     scale_factor = config_watershedAll.scale_factor.get()
     scale_bar_pixels_per_mm = config_watershedAll.scale_bar_pixels_per_mm.get()
     grayscale_threshold = config_watershedAll.grayscale_threshold.get()
     bottom_crop_ratio = config_watershedAll.bottom_crop_ratio.get()
-    smaller_grain_area_min = config_watershedAll.smaller_grain_area_min.get()
-    smaller_grain_area_max = config_watershedAll.smaller_grain_area_max.get()
-    larger_grain_area_min = config_watershedAll.larger_grain_area_min.get()
-    larger_grain_area_max = config_watershedAll.larger_grain_area_max.get()
-    uncertain_grain_area_min = config_watershedAll.uncertain_grain_area_min.get()
-    uncertain_grain_area_max = config_watershedAll.uncertain_grain_area_max.get()
+    pixel_size_mm = (1 / scale_bar_pixels_per_mm) ** 2
+    smaller_grain_area_min = (config_watershedAll.smaller_grain_area_min.get()) / pixel_size_mm
+    smaller_grain_area_max = (config_watershedAll.smaller_grain_area_max.get()) / pixel_size_mm
+    larger_grain_area_min = (config_watershedAll.larger_grain_area_min.get()) / pixel_size_mm
+    larger_grain_area_max = (config_watershedAll.larger_grain_area_max.get()) / pixel_size_mm
+    uncertain_grain_area_min = (config_watershedAll.uncertain_grain_area_min.get()) / pixel_size_mm
+    uncertain_grain_area_max = (config_watershedAll.uncertain_grain_area_max.get()) / pixel_size_mm
     kernel_size = config_watershedAll.kernel_size.get()
     distanceTransform_threshold = config_watershedAll.distanceTransform_threshold.get()
     grain_morphology = config_watershedAll.grain_morphology.get()
@@ -168,13 +170,14 @@ def calculate_area_and_filter_contours(result):
         smaller_grain_contours) if smaller_grain_contours else 0
 
     # Convert average area in pixels to average area in square millimeters
-    pixel_size_mm = 1 / scale_bar_pixels_per_mm
-    uncertain_grain_average_area_mm = uncertain_grain_average_area_pixels * pixel_size_mm ** 2
-    larger_grain_average_area_mm = larger_grain_average_area_pixels * pixel_size_mm ** 2
-    smaller_grain_average_area_mm = smaller_grain_average_area_pixels * pixel_size_mm ** 2
+
+    pixel_size_mm = (1 / scale_bar_pixels_per_mm)**2
+    uncertain_grain_average_area_mm = uncertain_grain_average_area_pixels * pixel_size_mm
+    larger_grain_average_area_mm = larger_grain_average_area_pixels * pixel_size_mm
+    smaller_grain_average_area_mm = smaller_grain_average_area_pixels * pixel_size_mm
 
     # Return the number of chocolate chips, the outlined image, the thresholded image and the average area
-    return larger_grain_contours, smaller_grain_contours, uncertain_grain_contours, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm
+    return larger_grain_contours, smaller_grain_contours, uncertain_grain_contours, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm, pixel_size_mm
 
 
 def draw_contours(image, uncertain_grain_contours, larger_grain_contours, smaller_grain_contours):
@@ -187,7 +190,7 @@ def draw_contours(image, uncertain_grain_contours, larger_grain_contours, smalle
 
 
 def display_images(grayscale_image_cv, outlined_image_cv):
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6), sharex='all', sharey='all')
 
     ax1.imshow(grayscale_image_cv, cmap='gray')
     ax1.set_title('Grayscale Image')
@@ -207,7 +210,7 @@ def run_grain_counting():
     init_GUI_variables()
     thresholded_image_3chan, markers, image = load_and_preprocessing()
     result = watershed_and_postprocessing(thresholded_image_3chan, markers)
-    larger_grain_contours, smaller_grain_contours, uncertain_grain_contours, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm = calculate_area_and_filter_contours(result)
+    larger_grain_contours, smaller_grain_contours, uncertain_grain_contours, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm, pixel_size_mm = calculate_area_and_filter_contours(result)
     result_image = draw_contours(image, uncertain_grain_contours, larger_grain_contours, smaller_grain_contours)
 
     if result is not None and result_image is not None:
@@ -218,23 +221,23 @@ def run_grain_counting():
         print(f" ")
         print(f"VISIBLE GRAIN COUNT...")
         print(
-            f"The number of smaller {smaller_grain_area_min} to {smaller_grain_area_max} pixel Al grains visible: "
+            f"The number of smaller {smaller_grain_area_min * pixel_size_mm:.3f} mm^2 to {smaller_grain_area_max * pixel_size_mm:.3f} mm^2 Al grains visible: "
             f"{len(smaller_grain_contours)}")
         print(
-            f"The number of larger {larger_grain_area_min} to {larger_grain_area_max} pixel Al grains visible: "
+            f"The number of larger {larger_grain_area_min * pixel_size_mm:.3f} mm^2 to {larger_grain_area_max * pixel_size_mm:.3f} mm^2 Al grains visible: "
             f"{len(larger_grain_contours)}")
         print(
-            f"The number of uncertain {uncertain_grain_area_min} to {uncertain_grain_area_max} pixel Al grains visible: "
+            f"The number of uncertain {uncertain_grain_area_min * pixel_size_mm:.3f} mm^2 to {uncertain_grain_area_max * pixel_size_mm:.3f} mm^2 Al grains visible: "
             f"{len(uncertain_grain_contours)}")
         print(f"The total number of visible Al Grains: {len(smaller_grain_contours) + len(larger_grain_contours) + len(uncertain_grain_contours)}")
         print(f" ")
         print(f"VISIBLE GRAIN AREA...")
         print(
-            f"The average visible surface area of the smaller {smaller_grain_area_min} to {smaller_grain_area_max} "
-            f"pixel Al grains: {smaller_grain_average_area_mm:.4f} mm^2")
+            f"The average visible surface area of the smaller {smaller_grain_area_min * pixel_size_mm:.3f} mm^2 to {smaller_grain_area_max * pixel_size_mm:.3f} mm^2 "
+            f"Al grains: {smaller_grain_average_area_mm:.3f} mm^2")
         print(
-            f"The average visible surface area of the larger {larger_grain_area_min} to {larger_grain_area_max} "
-            f"pixel Al grains: {larger_grain_average_area_mm:.4f} mm^2")
+            f"The average visible surface area of the larger {larger_grain_area_min * pixel_size_mm:.3f} mm^2 to {larger_grain_area_max * pixel_size_mm:.3f} mm^2 "
+            f"Al grains: {larger_grain_average_area_mm:.3f} mm^2")
         print(f" ")
         print(f"GRAIN COUNTING IMAGE PROCESSING PARAMETERS...")
         print(f'Scale Factor: {scale_factor}')
@@ -245,12 +248,12 @@ def run_grain_counting():
         print(f'Kernel Size: {kernel_size}')
         print(f'Distance Threshold: {distanceTransform_threshold}')
         print(f'Grain Morphology Simplicity: {grain_morphology}')
-        print(f'Smaller Grain Area Min: {smaller_grain_area_min}')
-        print(f'Smaller Grain Area Max: {smaller_grain_area_max}')
-        print(f'Larger Grain Area Min: {larger_grain_area_min}')
-        print(f'Larger Grain Area Max: {larger_grain_area_max}')
-        print(f'Uncertain Grain Area Min: {uncertain_grain_area_min}')
-        print(f'Uncertain Grain Area Max: {uncertain_grain_area_max}')
+        print(f'Smaller Grain Area Min: {smaller_grain_area_min * pixel_size_mm} mm^2')
+        print(f'Smaller Grain Area Max: {smaller_grain_area_max * pixel_size_mm} mm^2')
+        print(f'Larger Grain Area Min: {larger_grain_area_min * pixel_size_mm} mm^2')
+        print(f'Larger Grain Area Max: {larger_grain_area_max * pixel_size_mm} mm^2')
+        print(f'Uncertain Grain Area Min: {uncertain_grain_area_min * pixel_size_mm} mm^2')
+        print(f'Uncertain Grain Area Max: {uncertain_grain_area_max * pixel_size_mm} mm^2')
         print(f" ")
         print(f"-----------------------------------------------------------------------------------")
 

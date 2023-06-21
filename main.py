@@ -41,32 +41,32 @@ tk.Entry(frame2, textvariable=config_watershedAll.distanceTransform_threshold).g
 tk.Label(frame2, text="Grain Edge Morphology Simplicity:").grid(row=8, column=0, sticky='W', padx=10, pady=4)
 tk.Entry(frame2, textvariable=config_watershedAll.grain_morphology).grid(row=8, column=2)
 
-tk.Label(frame3, text="Smaller Grain Area Min (Pixels):").grid(row=10, column=0, sticky='W', padx=10, pady=4)
+tk.Label(frame3, text="Smaller Grain Area Min (mm^2):").grid(row=10, column=0, sticky='W', padx=10, pady=4)
 blue_square = tk.Label(frame3, bg='blue', width=2, height=1)
 blue_square.grid(row=10, column=1)
 tk.Entry(frame3, textvariable=config_watershedAll.smaller_grain_area_min).grid(row=10, column=2, padx=(10, 10))
 
-tk.Label(frame3, text="Smaller Grain Area Max (Pixels):").grid(row=11, column=0, sticky='W', padx=10, pady=4)
+tk.Label(frame3, text="Smaller Grain Area Max (mm^2):").grid(row=11, column=0, sticky='W', padx=10, pady=4)
 blue_square = tk.Label(frame3, bg='blue', width=2, height=1)
 blue_square.grid(row=11, column=1)
 tk.Entry(frame3, textvariable=config_watershedAll.smaller_grain_area_max).grid(row=11, column=2, padx=(10, 10))
 
-tk.Label(frame3, text="Larger Grain Area Min (Pixels):").grid(row=12, column=0, sticky='W', padx=10, pady=4)
+tk.Label(frame3, text="Larger Grain Area Min (mm^2):").grid(row=12, column=0, sticky='W', padx=10, pady=4)
 red_square = tk.Label(frame3, bg='red', width=2, height=1)
 red_square.grid(row=12, column=1)
 tk.Entry(frame3, textvariable=config_watershedAll.larger_grain_area_min).grid(row=12, column=2, padx=(10, 10))
 
-tk.Label(frame3, text="Larger Grain Area Max (Pixels):").grid(row=13, column=0, sticky='W', padx=10, pady=4)
+tk.Label(frame3, text="Larger Grain Area Max (mm^2):").grid(row=13, column=0, sticky='W', padx=10, pady=4)
 red_square = tk.Label(frame3, bg='red', width=2, height=1)
 red_square.grid(row=13, column=1)
 tk.Entry(frame3, textvariable=config_watershedAll.larger_grain_area_max).grid(row=13, column=2, padx=(10, 10))
 
-tk.Label(frame3, text="Uncertain Grain Area Min (Pixels):").grid(row=14, column=0, sticky='W', padx=10, pady=4)
+tk.Label(frame3, text="Uncertain Grain Area Min (mm^2):").grid(row=14, column=0, sticky='W', padx=10, pady=4)
 green_square = tk.Label(frame3, bg='green', width=2, height=1)
 green_square.grid(row=14, column=1)
 tk.Entry(frame3, textvariable=config_watershedAll.uncertain_grain_area_min).grid(row=14, column=2, padx=(10, 10))
 
-tk.Label(frame3, text="Uncertain Grain Area Max (Pixels):").grid(row=15, column=0, sticky='W', padx=10, pady=4)
+tk.Label(frame3, text="Uncertain Grain Area Max (mm^2):").grid(row=15, column=0, sticky='W', padx=10, pady=4)
 green_square = tk.Label(frame3, bg='green', width=2, height=1)
 green_square.grid(row=15, column=1)
 tk.Entry(frame3, textvariable=config_watershedAll.uncertain_grain_area_max).grid(row=15, column=2, padx=(10, 10))
