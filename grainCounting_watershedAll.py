@@ -1,7 +1,6 @@
 import cv2
 import sys
 import numpy as np
-import math
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Cursor
 import config_watershedAll
@@ -12,7 +11,8 @@ def init_GUI_variables():
     global equalize_hist
     global scale_factor
     global scale_bar_pixels_per_mm
-    global grayscale_threshold
+    global grayscale_threshold_lower
+    global grayscale_threshold_upper
     global bottom_crop_ratio
     global smaller_grain_area_min
     global smaller_grain_area_max
@@ -28,7 +28,8 @@ def init_GUI_variables():
     equalize_hist = config_watershedAll.equalize_hist.get()
     scale_factor = config_watershedAll.scale_factor.get()
     scale_bar_pixels_per_mm = config_watershedAll.scale_bar_pixels_per_mm.get()
-    grayscale_threshold = config_watershedAll.grayscale_threshold.get()
+    grayscale_threshold_lower = config_watershedAll.grayscale_threshold_lower.get()
+    grayscale_threshold_upper = config_watershedAll.grayscale_threshold_upper.get()
     bottom_crop_ratio = config_watershedAll.bottom_crop_ratio.get()
     pixel_size_mm = (1 / scale_bar_pixels_per_mm) ** 2
     smaller_grain_area_min = (config_watershedAll.smaller_grain_area_min.get()) / pixel_size_mm
@@ -81,7 +82,9 @@ def load_and_preprocessing():
     gray_image_blurred = cv2.GaussianBlur(gray_image, (kernel_size, kernel_size), 0)
 
     # Apply a threshold to the grayscale image
-    _, thresholded_image = cv2.threshold(gray_image_blurred, grayscale_threshold, 255, cv2.THRESH_BINARY)
+    # _, thresholded_image = cv2.threshold(gray_image_blurred, grayscale_threshold, 255, cv2.THRESH_BINARY)
+    thresholded_image = cv2.inRange(gray_image_blurred, grayscale_threshold_lower, grayscale_threshold_upper)
+
     thresholded_image = cv2.morphologyEx(thresholded_image, cv2.MORPH_OPEN, np.ones((grain_morphology, grain_morphology), dtype=int))
 
     thresholded_image_3chan = cv2.cvtColor(thresholded_image, cv2.COLOR_GRAY2BGR)
@@ -245,7 +248,8 @@ def run_grain_counting():
         print(f'Scale Bar Pixels Per mm: {scale_bar_pixels_per_mm}')
         print(f'Bottom Crop Ratio: {bottom_crop_ratio}')
         print(f'Equalize Histogram: {equalize_hist}')
-        print(f'Grayscale Threshold: {grayscale_threshold}')
+        print(f'Lower Grayscale Threshold: {grayscale_threshold_lower}')
+        print(f'Upper Grayscale Threshold: {grayscale_threshold_upper}')
         print(f'Kernel Size: {kernel_size}')
         print(f'Distance Threshold: {distanceTransform_threshold}')
         print(f'Grain Morphology Simplicity: {grain_morphology}')
@@ -268,7 +272,8 @@ def run_grain_counting():
 def reset_values():
     config_watershedAll.scale_factor.set(1.0)
     config_watershedAll.scale_bar_pixels_per_mm.set(255.9812)
-    config_watershedAll.grayscale_threshold.set(170)
+    config_watershedAll.grayscale_threshold_lower.set(170)
+    config_watershedAll.grayscale_threshold_upper.set(255)
     config_watershedAll.bottom_crop_ratio.set(0.05)
     config_watershedAll.smaller_grain_area_min.set(0.153)
     config_watershedAll.smaller_grain_diameter_min.set(0.441)

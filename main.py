@@ -50,17 +50,20 @@ tk.Entry(frame, textvariable=config_watershedAll.bottom_crop_ratio, width=16).gr
 tk.Label(frame2, text="*Warning: May Highlight Tile Borders*").grid(row=3, column=0, sticky='W', padx=10, pady=5)
 tk.Checkbutton(frame2, text="Equalize Histogram", variable=config_watershedAll.equalize_hist).grid(row=3, column=2)
 
-tk.Label(frame2, text="Pre-Process Contrast Threshold:").grid(row=5, column=0, sticky='W', padx=10, pady=4)
-tk.Entry(frame2, textvariable=config_watershedAll.grayscale_threshold).grid(row=5, column=2)
+tk.Label(frame2, text="Pre-Process Lower Contrast Threshold:").grid(row=5, column=0, sticky='W', padx=10, pady=4)
+tk.Entry(frame2, textvariable=config_watershedAll.grayscale_threshold_lower).grid(row=5, column=2)
 
-tk.Label(frame2, text="Blur Kernel Size (Odd Values Only):").grid(row=6, column=0, sticky='W', padx=10, pady=4)
-tk.Entry(frame2, textvariable=config_watershedAll.kernel_size).grid(row=6, column=2)
+tk.Label(frame2, text="Pre-Process Upper Contrast Threshold:").grid(row=6, column=0, sticky='W', padx=10, pady=4)
+tk.Entry(frame2, textvariable=config_watershedAll.grayscale_threshold_upper).grid(row=6, column=2)
 
-tk.Label(frame2, text="Distance Transform Contrast Threshold:").grid(row=7, column=0, sticky='W', padx=10, pady=4)
-tk.Entry(frame2, textvariable=config_watershedAll.distanceTransform_threshold).grid(row=7, column=2)
+tk.Label(frame2, text="Blur Kernel Size (Odd Values Only):").grid(row=7, column=0, sticky='W', padx=10, pady=4)
+tk.Entry(frame2, textvariable=config_watershedAll.kernel_size).grid(row=7, column=2)
 
-tk.Label(frame2, text="Grain Edge Morphology Simplicity:").grid(row=8, column=0, sticky='W', padx=10, pady=4)
-tk.Entry(frame2, textvariable=config_watershedAll.grain_morphology).grid(row=8, column=2)
+tk.Label(frame2, text="Distance Transform Contrast Threshold:").grid(row=8, column=0, sticky='W', padx=10, pady=4)
+tk.Entry(frame2, textvariable=config_watershedAll.distanceTransform_threshold).grid(row=8, column=2)
+
+tk.Label(frame2, text="Grain Edge Morphology Simplicity:").grid(row=9, column=0, sticky='W', padx=10, pady=4)
+tk.Entry(frame2, textvariable=config_watershedAll.grain_morphology).grid(row=9, column=2)
 
 # Third Block
 

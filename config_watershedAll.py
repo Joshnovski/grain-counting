@@ -14,7 +14,8 @@ def init_variables(root):
     global equalize_hist
     global scale_factor
     global scale_bar_pixels_per_mm
-    global grayscale_threshold
+    global grayscale_threshold_lower
+    global grayscale_threshold_upper
     global bottom_crop_ratio
 
     global smaller_grain_area_min
@@ -38,7 +39,8 @@ def init_variables(root):
 
     scale_factor = tk.DoubleVar(value=1.0)
     scale_bar_pixels_per_mm = tk.DoubleVar(value=255.9812)
-    grayscale_threshold = tk.IntVar(value=170)
+    grayscale_threshold_lower = tk.IntVar(value=170)
+    grayscale_threshold_upper = tk.IntVar(value=255)
     bottom_crop_ratio = tk.DoubleVar(value=0.05)
 
     kernel_size = tk.IntVar(value=15)
