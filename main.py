@@ -72,6 +72,7 @@ tk.Label(frame3, text="Circle Diameter (mm)").grid(row=9, column=3, padx=2)
 tk.Label(frame3, text="Smaller Grain Area Min:").grid(row=10, column=0, sticky='W', padx=10, pady=4)
 blue_square = tk.Label(frame3, bg='blue', width=2, height=1)
 blue_square.grid(row=10, column=1)
+
 entry_smaller_grain_area_min = tk.Entry(frame3, textvariable=config_watershedAll.smaller_grain_area_min, width=10)
 entry_smaller_grain_area_min.grid(row=10, column=2, padx=(10, 1))
 entry_smaller_grain_diameter_min = tk.Entry(frame3, textvariable=config_watershedAll.smaller_grain_diameter_min, width=15)
@@ -79,37 +80,65 @@ entry_smaller_grain_diameter_min.grid(row=10, column=3, padx=(1, 10))
 entry_smaller_grain_area_min.bind("<FocusOut>", lambda e: update_diameter(area_var=config_watershedAll.smaller_grain_area_min, diameter_var=config_watershedAll.smaller_grain_diameter_min))
 entry_smaller_grain_diameter_min.bind("<FocusOut>", lambda e: update_area(area_var=config_watershedAll.smaller_grain_area_min, diameter_var=config_watershedAll.smaller_grain_diameter_min))
 
-
-
 tk.Label(frame3, text="Smaller Grain Area Max:").grid(row=11, column=0, sticky='W', padx=10, pady=4)
 blue_square = tk.Label(frame3, bg='blue', width=2, height=1)
 blue_square.grid(row=11, column=1)
-tk.Entry(frame3, textvariable=config_watershedAll.smaller_grain_area_max, width=10).grid(row=11, column=2, padx=(10, 1))
-tk.Entry(frame3, textvariable=config_watershedAll.smaller_grain_diameter_max, width=15).grid(row=11, column=3, padx=(1, 10))
+
+entry_smaller_grain_area_max = tk.Entry(frame3, textvariable=config_watershedAll.smaller_grain_area_max, width=10)
+entry_smaller_grain_area_max.grid(row=11, column=2, padx=(10, 1))
+entry_smaller_grain_diameter_max = tk.Entry(frame3, textvariable=config_watershedAll.smaller_grain_diameter_max, width=15)
+entry_smaller_grain_diameter_max.grid(row=11, column=3, padx=(1, 10))
+entry_smaller_grain_area_max.bind("<FocusOut>", lambda e: update_diameter(area_var=config_watershedAll.smaller_grain_area_max, diameter_var=config_watershedAll.smaller_grain_diameter_max))
+entry_smaller_grain_diameter_max.bind("<FocusOut>", lambda e: update_area(area_var=config_watershedAll.smaller_grain_area_max, diameter_var=config_watershedAll.smaller_grain_diameter_max))
+
 
 tk.Label(frame3, text="Larger Grain Area Min:").grid(row=12, column=0, sticky='W', padx=10, pady=4)
 red_square = tk.Label(frame3, bg='red', width=2, height=1)
 red_square.grid(row=12, column=1)
-tk.Entry(frame3, textvariable=config_watershedAll.larger_grain_area_min, width=10).grid(row=12, column=2, padx=(10, 1))
-tk.Entry(frame3, textvariable=config_watershedAll.larger_grain_diameter_min, width=15).grid(row=12, column=3, padx=(1, 10))
+
+entry_larger_grain_area_min = tk.Entry(frame3, textvariable=config_watershedAll.larger_grain_area_min, width=10)
+entry_larger_grain_area_min.grid(row=12, column=2, padx=(10, 1))
+entry_larger_grain_diameter_min = tk.Entry(frame3, textvariable=config_watershedAll.larger_grain_diameter_min, width=15)
+entry_larger_grain_diameter_min.grid(row=12, column=3, padx=(1, 10))
+entry_larger_grain_area_min.bind("<FocusOut>", lambda e: update_diameter(area_var=config_watershedAll.larger_grain_area_min, diameter_var=config_watershedAll.larger_grain_diameter_min))
+entry_larger_grain_diameter_min.bind("<FocusOut>", lambda e: update_area(area_var=config_watershedAll.larger_grain_area_min, diameter_var=config_watershedAll.larger_grain_diameter_min))
+
 
 tk.Label(frame3, text="Larger Grain Area Max:").grid(row=13, column=0, sticky='W', padx=10, pady=4)
 red_square = tk.Label(frame3, bg='red', width=2, height=1)
 red_square.grid(row=13, column=1)
-tk.Entry(frame3, textvariable=config_watershedAll.larger_grain_area_max, width=10).grid(row=13, column=2, padx=(10, 1))
-tk.Entry(frame3, textvariable=config_watershedAll.larger_grain_diameter_max, width=15).grid(row=13, column=3, padx=(1, 10))
+
+entry_larger_grain_area_max = tk.Entry(frame3, textvariable=config_watershedAll.larger_grain_area_max, width=10)
+entry_larger_grain_area_max.grid(row=13, column=2, padx=(10, 1))
+entry_larger_grain_diameter_max = tk.Entry(frame3, textvariable=config_watershedAll.larger_grain_diameter_max, width=15)
+entry_larger_grain_diameter_max.grid(row=13, column=3, padx=(1, 10))
+entry_larger_grain_area_max.bind("<FocusOut>", lambda e: update_diameter(area_var=config_watershedAll.larger_grain_area_max, diameter_var=config_watershedAll.larger_grain_diameter_max))
+entry_larger_grain_diameter_max.bind("<FocusOut>", lambda e: update_area(area_var=config_watershedAll.larger_grain_area_max, diameter_var=config_watershedAll.larger_grain_diameter_max))
+
 
 tk.Label(frame3, text="Uncertain Grain Area Min:").grid(row=14, column=0, sticky='W', padx=10, pady=4)
 green_square = tk.Label(frame3, bg='green', width=2, height=1)
 green_square.grid(row=14, column=1)
-tk.Entry(frame3, textvariable=config_watershedAll.uncertain_grain_area_min, width=10).grid(row=14, column=2, padx=(10, 1))
-tk.Entry(frame3, textvariable=config_watershedAll.uncertain_grain_diameter_min, width=15).grid(row=14, column=3, padx=(1, 10))
+
+entry_uncertain_grain_area_min = tk.Entry(frame3, textvariable=config_watershedAll.uncertain_grain_area_min, width=10)
+entry_uncertain_grain_area_min.grid(row=14, column=2, padx=(10, 1))
+entry_uncertain_grain_diameter_min = tk.Entry(frame3, textvariable=config_watershedAll.uncertain_grain_diameter_min, width=15)
+entry_uncertain_grain_diameter_min.grid(row=14, column=3, padx=(1, 10))
+entry_uncertain_grain_area_min.bind("<FocusOut>", lambda e: update_diameter(area_var=config_watershedAll.uncertain_grain_area_min, diameter_var=config_watershedAll.uncertain_grain_diameter_min))
+entry_uncertain_grain_diameter_min.bind("<FocusOut>", lambda e: update_area(area_var=config_watershedAll.uncertain_grain_area_min, diameter_var=config_watershedAll.uncertain_grain_diameter_min))
+
 
 tk.Label(frame3, text="Uncertain Grain Area Max:").grid(row=15, column=0, sticky='W', padx=10, pady=4)
 green_square = tk.Label(frame3, bg='green', width=2, height=1)
 green_square.grid(row=15, column=1)
-tk.Entry(frame3, textvariable=config_watershedAll.uncertain_grain_area_max, width=10).grid(row=15, column=2, padx=(10, 1))
-tk.Entry(frame3, textvariable=config_watershedAll.uncertain_grain_diameter_max, width=15).grid(row=15, column=3, padx=(1, 10))
+
+entry_uncertain_grain_area_max = tk.Entry(frame3, textvariable=config_watershedAll.uncertain_grain_area_max, width=10)
+entry_uncertain_grain_area_max.grid(row=15, column=2, padx=(10, 1))
+entry_uncertain_grain_diameter_max = tk.Entry(frame3, textvariable=config_watershedAll.uncertain_grain_diameter_max, width=15)
+entry_uncertain_grain_diameter_max.grid(row=15, column=3, padx=(1, 10))
+entry_uncertain_grain_area_max.bind("<FocusOut>", lambda e: update_diameter(area_var=config_watershedAll.uncertain_grain_area_max, diameter_var=config_watershedAll.uncertain_grain_diameter_max))
+entry_uncertain_grain_diameter_max.bind("<FocusOut>", lambda e: update_area(area_var=config_watershedAll.uncertain_grain_area_max, diameter_var=config_watershedAll.uncertain_grain_diameter_max))
+
 
 root.grid_columnconfigure(0, weight=1, minsize=20)  # Add padding on left side
 root.grid_columnconfigure(3, weight=1, minsize=10)  # Add padding on right side
