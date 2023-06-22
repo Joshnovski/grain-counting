@@ -1,6 +1,7 @@
 import cv2
 import sys
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Cursor
 import config_watershedAll
@@ -142,28 +143,44 @@ def calculate_area_and_filter_contours(result):
     uncertain_grain_contours = []
     larger_grain_contours = []
     smaller_grain_contours = []
+    grain_areas = []
+    grain_areas_filtered = []
+    grain_diameters = []
+    grain_diameters_filtered = []
     uncertain_grain_total_area = 0
     larger_grain_total_area = 0
     smaller_grain_total_area = 0
+    pixel_size_mm = (1 / scale_bar_pixels_per_mm) ** 2
 
     # Filter contours based on size and shape - first pass
     for contour in contours:
-        uncertain_grain_area = cv2.contourArea(contour)
-        larger_grain_area = cv2.contourArea(contour)
-        smaller_grain_area = cv2.contourArea(contour)
+        grain_area = cv2.contourArea(contour)
+        grain_real_area = grain_area * pixel_size_mm
+        grain_areas.append(grain_real_area)
+        grain_diameters.append(math.sqrt(4*float(grain_real_area)/math.pi))
+
+        # histogram filtration based on selected grain range
+        if smaller_grain_area_min < grain_area < uncertain_grain_area_max:
+            grain_real_area = grain_area * pixel_size_mm
+            grain_areas_filtered.append(grain_real_area)
+            grain_diameters_filtered.append(math.sqrt(4*float(grain_real_area)/math.pi))
+        else:
+            # Set placeholder values outside the range of the distogram to ensure data length remains the same
+            grain_areas_filtered.append(-0.1)
+            grain_diameters_filtered.append(-0.1)
 
         # uncertain grain size range
-        if uncertain_grain_area_min < uncertain_grain_area < uncertain_grain_area_max:
+        if uncertain_grain_area_min < grain_area < uncertain_grain_area_max:
             uncertain_grain_contours.append(contour)
-            uncertain_grain_total_area += uncertain_grain_area
+            uncertain_grain_total_area += grain_area
         # higher grain size range
-        if larger_grain_area_min < larger_grain_area < larger_grain_area_max:
+        if larger_grain_area_min < grain_area < larger_grain_area_max:
             larger_grain_contours.append(contour)
-            larger_grain_total_area += larger_grain_area
+            larger_grain_total_area += grain_area
         # smaller grain size range
-        if smaller_grain_area_min < smaller_grain_area < smaller_grain_area_max:
+        if smaller_grain_area_min < grain_area < smaller_grain_area_max:
             smaller_grain_contours.append(contour)
-            smaller_grain_total_area += smaller_grain_area
+            smaller_grain_total_area += grain_area
 
     # Calculate average area in pixels
     uncertain_grain_average_area_pixels = uncertain_grain_total_area / len(
@@ -175,13 +192,35 @@ def calculate_area_and_filter_contours(result):
 
     # Convert average area in pixels to average area in square millimeters
 
-    pixel_size_mm = (1 / scale_bar_pixels_per_mm)**2
     uncertain_grain_average_area_mm = uncertain_grain_average_area_pixels * pixel_size_mm
     larger_grain_average_area_mm = larger_grain_average_area_pixels * pixel_size_mm
     smaller_grain_average_area_mm = smaller_grain_average_area_pixels * pixel_size_mm
 
     # Return the number of chocolate chips, the outlined image, the thresholded image and the average area
-    return larger_grain_contours, smaller_grain_contours, uncertain_grain_contours, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm, pixel_size_mm
+    return larger_grain_contours, smaller_grain_contours, uncertain_grain_contours, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm, pixel_size_mm, grain_areas, grain_diameters, grain_areas_filtered, grain_diameters_filtered
+
+
+def grain_size_histogram(grain_areas, grain_diameters, grain_areas_filtered, grain_diameters_filtered):
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+
+    # Calculate bin_width
+    n = 30  # Number of bins
+    bin_width = (max(grain_areas) - min(grain_areas)) / n
+
+    # Plot the first histogram (Removed first bin containing a very large peak of noise grains)
+    ax1.hist(grain_areas, bins=n, color='blue', alpha=1, range=(0 + bin_width, max(grain_areas)))
+    ax1.hist(grain_areas_filtered, bins=n, color='red', alpha=1, range=(0 + bin_width, max(grain_areas)))
+    ax1.set_xlabel('Grain Area (mm\u00b2)')
+    ax1.set_ylabel('Count of Grains')
+
+    # Plot the second histogram
+    ax2.hist(grain_diameters, bins=n, color='blue', alpha=1, range=(0 + bin_width, max(grain_areas)))
+    ax2.hist(grain_diameters_filtered, bins=n, color='red', alpha=1, range=(0 + bin_width, max(grain_areas)))
+    ax2.set_xlabel('Grain Diameters (mm)')
+    ax2.set_ylabel('Count of Grains')
+
+    plt.tight_layout()  # Adjust spacing between subplots to minimize overlap
+    plt.show(block=False)
 
 
 def draw_contours(image, uncertain_grain_contours, larger_grain_contours, smaller_grain_contours):
@@ -214,7 +253,8 @@ def run_grain_counting():
     init_GUI_variables()
     thresholded_image_3chan, markers, image = load_and_preprocessing()
     result = watershed_and_postprocessing(thresholded_image_3chan, markers)
-    larger_grain_contours, smaller_grain_contours, uncertain_grain_contours, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm, pixel_size_mm = calculate_area_and_filter_contours(result)
+    larger_grain_contours, smaller_grain_contours, uncertain_grain_contours, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm, pixel_size_mm, grain_areas, grain_diameters, grain_areas_filtered, grain_diameters_filtered = calculate_area_and_filter_contours(result)
+    grain_size_histogram(grain_areas, grain_diameters, grain_areas_filtered, grain_diameters_filtered)
     result_image = draw_contours(image, uncertain_grain_contours, larger_grain_contours, smaller_grain_contours)
 
     if result is not None and result_image is not None:
