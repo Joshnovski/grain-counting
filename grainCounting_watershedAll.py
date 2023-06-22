@@ -222,23 +222,23 @@ def run_grain_counting():
         print(f" ")
         print(f"VISIBLE GRAIN COUNT...")
         print(
-            f"The number of smaller {smaller_grain_area_min * pixel_size_mm:.3f} mm^2 to {smaller_grain_area_max * pixel_size_mm:.3f} mm^2 Al grains visible: "
+            f"The number of smaller {smaller_grain_area_min * pixel_size_mm:.3f} mm\u00b2 to {smaller_grain_area_max * pixel_size_mm:.3f} mm\u00b2 Al grains visible: "
             f"{len(smaller_grain_contours)}")
         print(
-            f"The number of larger {larger_grain_area_min * pixel_size_mm:.3f} mm^2 to {larger_grain_area_max * pixel_size_mm:.3f} mm^2 Al grains visible: "
+            f"The number of larger {larger_grain_area_min * pixel_size_mm:.3f} mm\u00b2 to {larger_grain_area_max * pixel_size_mm:.3f} mm\u00b2 Al grains visible: "
             f"{len(larger_grain_contours)}")
         print(
-            f"The number of uncertain {uncertain_grain_area_min * pixel_size_mm:.3f} mm^2 to {uncertain_grain_area_max * pixel_size_mm:.3f} mm^2 Al grains visible: "
+            f"The number of uncertain {uncertain_grain_area_min * pixel_size_mm:.3f} mm\u00b2 to {uncertain_grain_area_max * pixel_size_mm:.3f} mm\u00b2 Al grains visible: "
             f"{len(uncertain_grain_contours)}")
         print(f"The total number of visible Al Grains: {len(smaller_grain_contours) + len(larger_grain_contours) + len(uncertain_grain_contours)}")
         print(f" ")
         print(f"VISIBLE GRAIN AREA...")
         print(
-            f"The average visible surface area of the smaller {smaller_grain_area_min * pixel_size_mm:.3f} mm^2 to {smaller_grain_area_max * pixel_size_mm:.3f} mm^2 "
-            f"Al grains: {smaller_grain_average_area_mm:.3f} mm^2")
+            f"The average visible surface area of the smaller {smaller_grain_area_min * pixel_size_mm:.3f} mm\u00b2 to {smaller_grain_area_max * pixel_size_mm:.3f} mm\u00b2 "
+            f"Al grains: {smaller_grain_average_area_mm:.3f} mm\u00b2")
         print(
-            f"The average visible surface area of the larger {larger_grain_area_min * pixel_size_mm:.3f} mm^2 to {larger_grain_area_max * pixel_size_mm:.3f} mm^2 "
-            f"Al grains: {larger_grain_average_area_mm:.3f} mm^2")
+            f"The average visible surface area of the larger {larger_grain_area_min * pixel_size_mm:.3f} mm\u00b2 to {larger_grain_area_max * pixel_size_mm:.3f} mm\u00b2 "
+            f"Al grains: {larger_grain_average_area_mm:.3f} mm\u00b2")
         print(f" ")
         print(f"GRAIN COUNTING IMAGE PROCESSING PARAMETERS...")
         print(f'Scale Factor: {scale_factor}')
@@ -249,12 +249,12 @@ def run_grain_counting():
         print(f'Kernel Size: {kernel_size}')
         print(f'Distance Threshold: {distanceTransform_threshold}')
         print(f'Grain Morphology Simplicity: {grain_morphology}')
-        print(f'Smaller Grain Area Min: {smaller_grain_area_min * pixel_size_mm} mm^2. Equivalent to a {math.sqrt(4*(smaller_grain_area_min*pixel_size_mm)/math.pi):.3f} mm diameter circle')
-        print(f'Smaller Grain Area Max: {smaller_grain_area_max * pixel_size_mm} mm^2. Equivalent to a {math.sqrt(4*(smaller_grain_area_max*pixel_size_mm)/math.pi):.3f} mm diameter circle')
-        print(f'Larger Grain Area Min: {larger_grain_area_min * pixel_size_mm} mm^2. Equivalent to a {math.sqrt(4*(larger_grain_area_min*pixel_size_mm)/math.pi):.3f} mm diameter circle')
-        print(f'Larger Grain Area Max: {larger_grain_area_max * pixel_size_mm} mm^2. Equivalent to a {math.sqrt(4*(larger_grain_area_max*pixel_size_mm)/math.pi):.3f} mm diameter circle')
-        print(f'Uncertain Grain Area Min: {uncertain_grain_area_min * pixel_size_mm} mm^2. Equivalent to a {math.sqrt(4*(uncertain_grain_area_min*pixel_size_mm)/math.pi):.3f} mm diameter circle')
-        print(f'Uncertain Grain Area Max: {uncertain_grain_area_max * pixel_size_mm} mm^2. Equivalent to a {math.sqrt(4*(uncertain_grain_area_max*pixel_size_mm)/math.pi):.3f} mm diameter circle')
+        print(f'Smaller Grain Area Min: {smaller_grain_area_min * pixel_size_mm} mm\u00b2')
+        print(f'Smaller Grain Area Max: {smaller_grain_area_max * pixel_size_mm} mm\u00b2')
+        print(f'Larger Grain Area Min: {larger_grain_area_min * pixel_size_mm} mm\u00b2')
+        print(f'Larger Grain Area Max: {larger_grain_area_max * pixel_size_mm} mm\u00b2')
+        print(f'Uncertain Grain Area Min: {uncertain_grain_area_min * pixel_size_mm} mm\u00b2')
+        print(f'Uncertain Grain Area Max: {uncertain_grain_area_max * pixel_size_mm} mm\u00b2')
         print(f" ")
         print(f"-----------------------------------------------------------------------------------")
 
@@ -270,12 +270,13 @@ def reset_values():
     config_watershedAll.scale_bar_pixels_per_mm.set(255.9812)
     config_watershedAll.grayscale_threshold.set(170)
     config_watershedAll.bottom_crop_ratio.set(0.05)
-    config_watershedAll.smaller_grain_area_min.set(10000)
-    config_watershedAll.smaller_grain_area_max.set(50000)
-    config_watershedAll.larger_grain_area_min.set(50000)
-    config_watershedAll.larger_grain_area_max.set(90000)
-    config_watershedAll.uncertain_grain_area_min.set(90000)
-    config_watershedAll.uncertain_grain_area_max.set(400000)
+    config_watershedAll.smaller_grain_area_min.set(0.153)
+    config_watershedAll.smaller_grain_diameter_min.set(0.441)
+    config_watershedAll.smaller_grain_area_max.set(0.763)
+    config_watershedAll.larger_grain_area_min.set(0.763)
+    config_watershedAll.larger_grain_area_max.set(1.373)
+    config_watershedAll.uncertain_grain_area_min.set(1.373)
+    config_watershedAll.uncertain_grain_area_max.set(6.104)
     config_watershedAll.kernel_size.set(15)
     config_watershedAll.distanceTransform_threshold.set(70)
     config_watershedAll.grain_morphology.set(3)
