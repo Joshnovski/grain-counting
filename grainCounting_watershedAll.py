@@ -136,6 +136,7 @@ def watershed_and_postprocessing(thresholded_image_3chan, markers):
     # Apply the mask to the result image
     result = np.where(dilated_border_mask == 255, dilated_border_mask, separated_grains_image)
     result = 255 - result
+    _, result = cv2.threshold(result, 0, 255, cv2.THRESH_BINARY)
 
     return result
 
