@@ -29,10 +29,12 @@ config_watershedAll.init_variables(root)  # Initialize the tkinter variables
 frame = tk.Frame(root, bd=2, relief='groove', padx=5, pady=5)
 frame2 = tk.Frame(root, bd=2, relief='groove', padx=5, pady=5)
 frame3 = tk.Frame(root, bd=2, relief='groove', padx=5, pady=5)
+frame4 = tk.Frame(root, bd=2, relief='groove', padx=5, pady=5)
 
 frame.grid(row=0, column=0, sticky='nsew', padx=(10, 1), pady=10)
-frame2.grid(row=1, column=0, sticky='nsew', padx=(10, 1), pady=10)
-frame3.grid(row=2, column=0, sticky='nsew', padx=(10, 1), pady=10)
+frame2.grid(row=2, column=0, sticky='nsew', padx=(10, 1), pady=10)
+frame3.grid(row=3, column=0, sticky='nsew', padx=(10, 1), pady=10)
+frame4.grid(row=1, column=0, sticky='nsew', padx=(10, 1), pady=10)
 
 # First Block
 
@@ -46,6 +48,17 @@ tk.Label(frame, text="Bottom Crop Ratio:").grid(row=2, column=0, sticky='W', pad
 tk.Entry(frame, textvariable=config_watershedAll.bottom_crop_ratio, width=16).grid(row=2, column=1)
 
 # Second Block
+
+tk.Label(frame4, text="Show Grain Size Histograms: ").grid(row=0, column=0, sticky='W', padx=10, pady=5)
+tk.Checkbutton(frame4, text="Tick to Show", variable=config_watershedAll.show_hist).grid(row=0, column=2)
+
+tk.Label(frame4, text="Show Grain Counting Images: ").grid(row=1, column=0, sticky='W', padx=10, pady=5)
+tk.Checkbutton(frame4, text="Tick to Show", variable=config_watershedAll.show_images).grid(row=1, column=2)
+
+tk.Label(frame4, text="Number of Bins in Histogram:").grid(row=2, column=0, sticky='W', padx=(10, 60), pady=4)
+tk.Entry(frame4, textvariable=config_watershedAll.histogram_bins).grid(row=2, column=2)
+
+# Third Block
 
 tk.Label(frame2, text="*Warning: May Highlight Tile Borders*").grid(row=3, column=0, sticky='W', padx=10, pady=5)
 tk.Checkbutton(frame2, text="Equalize Histogram", variable=config_watershedAll.equalize_hist).grid(row=3, column=2)
@@ -65,9 +78,7 @@ tk.Entry(frame2, textvariable=config_watershedAll.distanceTransform_threshold).g
 tk.Label(frame2, text="Grain Edge Morphology Simplicity:").grid(row=9, column=0, sticky='W', padx=10, pady=4)
 tk.Entry(frame2, textvariable=config_watershedAll.grain_morphology).grid(row=9, column=2)
 
-# Third Block
-
-
+# forth Block
 
 tk.Label(frame3, text="mm\u00b2").grid(row=9, column=2, padx=2)
 tk.Label(frame3, text="Circle Diameter (mm)").grid(row=9, column=3, padx=2)

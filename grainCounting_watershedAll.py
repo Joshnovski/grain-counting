@@ -25,6 +25,9 @@ def init_GUI_variables():
     global distanceTransform_threshold
     global grain_morphology
     global pixel_size_mm
+    global histogram_bins
+    global show_hist
+    global show_images
 
     equalize_hist = config_watershedAll.equalize_hist.get()
     scale_factor = config_watershedAll.scale_factor.get()
@@ -42,6 +45,9 @@ def init_GUI_variables():
     kernel_size = config_watershedAll.kernel_size.get()
     distanceTransform_threshold = config_watershedAll.distanceTransform_threshold.get()
     grain_morphology = config_watershedAll.grain_morphology.get()
+    histogram_bins = config_watershedAll.histogram_bins.get()
+    show_hist = config_watershedAll.show_hist.get()
+    show_images = config_watershedAll.show_images.get()
     return
 
 
@@ -155,32 +161,34 @@ def calculate_area_and_filter_contours(result):
     # Filter contours based on size and shape - first pass
     for contour in contours:
         grain_area = cv2.contourArea(contour)
-        grain_real_area = grain_area * pixel_size_mm
-        grain_areas.append(grain_real_area)
-        grain_diameters.append(math.sqrt(4*float(grain_real_area)/math.pi))
+        if grain_area < uncertain_grain_area_min:
+            grain_real_area = grain_area * pixel_size_mm
+            grain_areas.append(grain_real_area)
+            grain_diameters.append(math.sqrt(4 * float(grain_real_area) / math.pi) * 1000)  # units in um
 
         # histogram filtration based on selected grain range
-        if smaller_grain_area_min < grain_area < uncertain_grain_area_max:
+        if smaller_grain_area_min <= grain_area < uncertain_grain_area_min:
             grain_real_area = grain_area * pixel_size_mm
             grain_areas_filtered.append(grain_real_area)
-            grain_diameters_filtered.append(math.sqrt(4*float(grain_real_area)/math.pi))
+            grain_diameters_filtered.append(math.sqrt(4 * float(grain_real_area) / math.pi) * 1000)
+        # Append values outside the range to -0.1 to ensure array lengths of overlay and background hists are equal
         else:
             # Set placeholder values outside the range of the distogram to ensure data length remains the same
             grain_areas_filtered.append(-0.1)
             grain_diameters_filtered.append(-0.1)
 
-        # uncertain grain size range
-        if uncertain_grain_area_min < grain_area < uncertain_grain_area_max:
-            uncertain_grain_contours.append(contour)
-            uncertain_grain_total_area += grain_area
-        # higher grain size range
-        if larger_grain_area_min < grain_area < larger_grain_area_max:
-            larger_grain_contours.append(contour)
-            larger_grain_total_area += grain_area
         # smaller grain size range
         if smaller_grain_area_min < grain_area < smaller_grain_area_max:
             smaller_grain_contours.append(contour)
             smaller_grain_total_area += grain_area
+        # higher grain size range
+        if larger_grain_area_min <= grain_area < larger_grain_area_max:
+            larger_grain_contours.append(contour)
+            larger_grain_total_area += grain_area
+        # uncertain grain size range
+        if uncertain_grain_area_min <= grain_area < uncertain_grain_area_max:
+            uncertain_grain_contours.append(contour)
+            uncertain_grain_total_area += grain_area
 
     # Calculate average area in pixels
     uncertain_grain_average_area_pixels = uncertain_grain_total_area / len(
@@ -203,21 +211,38 @@ def calculate_area_and_filter_contours(result):
 def grain_size_histogram(grain_areas, grain_diameters, grain_areas_filtered, grain_diameters_filtered):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
 
-    # Calculate bin_width
-    n = 30  # Number of bins
-    bin_width = (max(grain_areas) - min(grain_areas)) / n
+    # filtered_count = []
+    # for grain in grain_areas_filtered:
+    #     if grain > 0:
+    #         filtered_count.append(grain)
+    #
+    # print(f"Grain_areas: {len(grain_areas)}")
+    # print(f"Grain_areas_filtered: {len(filtered_count)}")
 
-    # Plot the first histogram (Removed first bin containing a very large peak of noise grains)
-    ax1.hist(grain_areas, bins=n, color='blue', alpha=1, range=(0 + bin_width, max(grain_areas)))
-    ax1.hist(grain_areas_filtered, bins=n, color='red', alpha=1, range=(0 + bin_width, max(grain_areas)))
+    # Calculate bin_width
+    n = histogram_bins  # Number of bins
+    bin_width_mm = (max(grain_areas) - min(grain_areas)) / n  # based on mm
+    bin_width_um = (max(grain_diameters) - min(grain_diameters)) / n  # based on um
+
+    # Plot the first histogram (Removed first 7 bins containing a very large peaks of noise grains)
+    ax1.hist(grain_areas, bins=n, color='black', alpha=0.5, range=(0 + bin_width_mm, max(grain_areas)), edgecolor='white', label='All Grain Areas')
+    ax1.hist(grain_areas_filtered, bins=n, color='orange', alpha=1, range=(0 + bin_width_mm, max(grain_areas)), edgecolor='white', label='Grain Areas Selected (Excluding Uncertain Grains)')
     ax1.set_xlabel('Grain Area (mm\u00b2)')
     ax1.set_ylabel('Count of Grains')
 
     # Plot the second histogram
-    ax2.hist(grain_diameters, bins=n, color='blue', alpha=1, range=(0 + bin_width, max(grain_areas)))
-    ax2.hist(grain_diameters_filtered, bins=n, color='red', alpha=1, range=(0 + bin_width, max(grain_areas)))
-    ax2.set_xlabel('Grain Diameters (mm)')
+    ax2.hist(grain_diameters, bins=n, color='black', alpha=0.5, range=(0 + 7 * bin_width_um, max(grain_diameters)), edgecolor='white', label='All Grain Diameters')
+    ax2.hist(grain_diameters_filtered, bins=n, color='orange', alpha=1, range=(0 + 7 * bin_width_um, max(grain_diameters)), edgecolor='white', label='Grain Diameters Selected (Excluding Uncertain Grains)')
+    ax2.set_xlabel('Grain Diameters (\u03BCm)')
     ax2.set_ylabel('Count of Grains')
+
+    ax1.legend(loc="upper right")
+    ax2.legend(loc="upper right")
+
+    for grains in ax1.containers:
+        ax1.bar_label(grains)
+    for grains in ax2.containers:
+        ax2.bar_label(grains)
 
     plt.tight_layout()  # Adjust spacing between subplots to minimize overlap
     plt.show(block=False)
@@ -254,7 +279,10 @@ def run_grain_counting():
     thresholded_image_3chan, markers, image = load_and_preprocessing()
     result = watershed_and_postprocessing(thresholded_image_3chan, markers)
     larger_grain_contours, smaller_grain_contours, uncertain_grain_contours, uncertain_grain_average_area_mm, larger_grain_average_area_mm, smaller_grain_average_area_mm, pixel_size_mm, grain_areas, grain_diameters, grain_areas_filtered, grain_diameters_filtered = calculate_area_and_filter_contours(result)
-    grain_size_histogram(grain_areas, grain_diameters, grain_areas_filtered, grain_diameters_filtered)
+
+    if show_hist:
+        grain_size_histogram(grain_areas, grain_diameters, grain_areas_filtered, grain_diameters_filtered)
+
     result_image = draw_contours(image, uncertain_grain_contours, larger_grain_contours, smaller_grain_contours)
 
     if result is not None and result_image is not None:
@@ -302,7 +330,8 @@ def run_grain_counting():
         print(f" ")
         print(f"-----------------------------------------------------------------------------------")
 
-        display_images(result, result_image)
+        if show_images:
+            display_images(result, result_image)
 
     else:
         print("Error: Unable to process images.")
@@ -315,18 +344,26 @@ def reset_values():
     config_watershedAll.grayscale_threshold_lower.set(170)
     config_watershedAll.grayscale_threshold_upper.set(255)
     config_watershedAll.bottom_crop_ratio.set(0.05)
-    config_watershedAll.smaller_grain_area_min.set(0.153)
-    config_watershedAll.smaller_grain_diameter_min.set(0.441)
+
+    config_watershedAll.smaller_grain_area_min.set(0.283)
+    config_watershedAll.smaller_grain_diameter_min.set(0.600)
+
     config_watershedAll.smaller_grain_area_max.set(0.763)
     config_watershedAll.smaller_grain_diameter_max.set(0.986)
+
     config_watershedAll.larger_grain_area_min.set(0.763)
     config_watershedAll.larger_grain_diameter_min.set(0.986)
+
     config_watershedAll.larger_grain_area_max.set(1.373)
     config_watershedAll.larger_grain_diameter_max.set(1.322)
+
     config_watershedAll.uncertain_grain_area_min.set(1.373)
     config_watershedAll.uncertain_grain_diameter_min.set(1.322)
+
     config_watershedAll.uncertain_grain_area_max.set(6.104)
     config_watershedAll.uncertain_grain_diameter_max.set(2.788)
-    config_watershedAll.kernel_size.set(15)
-    config_watershedAll.distanceTransform_threshold.set(70)
+
+    config_watershedAll.kernel_size.set(3)
+    config_watershedAll.distanceTransform_threshold.set(7)
     config_watershedAll.grain_morphology.set(3)
+    config_watershedAll.histogram_bins.set(20)
