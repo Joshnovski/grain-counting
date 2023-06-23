@@ -212,14 +212,6 @@ def calculate_area_and_filter_contours(result):
 def grain_size_histogram(grain_areas, grain_diameters, grain_areas_filtered, grain_diameters_filtered):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
 
-    # filtered_count = []
-    # for grain in grain_areas_filtered:
-    #     if grain > 0:
-    #         filtered_count.append(grain)
-    #
-    # print(f"Grain_areas: {len(grain_areas)}")
-    # print(f"Grain_areas_filtered: {len(filtered_count)}")
-
     # Calculate bin_width
     n = histogram_bins  # Number of bins
     bin_width_mm = (max(grain_areas) - min(grain_areas)) / n  # based on mm
