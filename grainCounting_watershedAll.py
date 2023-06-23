@@ -254,12 +254,12 @@ def display_images(grayscale_image_cv, outlined_image_cv):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6), sharex='all', sharey='all')
 
     ax1.imshow(grayscale_image_cv, cmap='gray')
-    ax1.set_title('Grayscale Image')
+    ax1.set_title('Segmented Binary Image (Post Watershed)')
     ax1.axis('off')
     Cursor(ax1, useblit=True, color='red', linewidth=1)
 
     ax2.imshow(cv2.cvtColor(outlined_image_cv, cv2.COLOR_BGR2RGB))
-    ax2.set_title('Outlined Image')
+    ax2.set_title('Filtered Contours Drawn Over Original Image')
     ax2.axis('off')
     Cursor(ax2, useblit=True, color='red', linewidth=1)
 
